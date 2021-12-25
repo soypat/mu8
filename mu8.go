@@ -18,6 +18,8 @@ type Genome[T any] interface {
 
 // Gene is the basic physical and functional unit of heredity.
 type Gene[T any] interface {
+	// Instance returns the backing gene data.
+	Instance() T
 	// Splice modifies the receiver with the attributes of the argument.
 	Splice(T)
 	// Copy returns a copy of the gene so that modifying the receiver is not reflected in the returned parameter.

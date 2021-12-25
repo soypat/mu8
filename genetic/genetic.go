@@ -100,7 +100,7 @@ func Breed[T any](firstParent mu8.Genome[T], conjugates ...mu8.Genome[T]) mu8.Ge
 	for i := 0; i < child.Len(); i++ {
 		gene := child.GetGene(i)
 		for _, c := range conjugates {
-			gene.Splice(c.GetGene(i))
+			gene.Splice(c.GetGene(i).Instance())
 		}
 	}
 	return child

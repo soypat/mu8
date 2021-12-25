@@ -26,6 +26,8 @@ func (c *ConstrainedFloat) Copy() *ConstrainedFloat {
 	return &clone
 }
 
+func (c *ConstrainedFloat) Instance() *ConstrainedFloat { return c }
+
 func (c *ConstrainedFloat) Splice(g *ConstrainedFloat) {
 	// Naive average.
 	c.gene = c.clamp((c.gene + g.gene) / 2)
