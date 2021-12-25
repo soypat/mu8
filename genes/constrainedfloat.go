@@ -6,6 +6,8 @@ import (
 	"github.com/soypat/mu8"
 )
 
+var _ mu8.Gene[*ConstrainedFloat] = (*ConstrainedFloat)(nil)
+
 // ConstrainedFloat implements Gene interface.
 type ConstrainedFloat struct {
 	// functional unit of heredity.
@@ -13,18 +15,20 @@ type ConstrainedFloat struct {
 	max, min float64
 }
 
-func (c *ConstrainedFloat) Copy() mu8.Gene {
+func (c *ConstrainedFloat) Mutate(rand float64) {
+	// Naive normal distribution.
+	rand = c.min + rand*(c.max-c.min)
+	c.gene = rand
+}
+
+func (c *ConstrainedFloat) Copy() *ConstrainedFloat {
 	clone := *c
 	return &clone
 }
 
-func (c *ConstrainedFloat) Splice(g mu8.Gene) {
-	cother, ok := g.(*ConstrainedFloat)
-	if !ok {
-		panic("expected same type in Splice")
-	}
+func (c *ConstrainedFloat) Splice(g *ConstrainedFloat) {
 	// Naive average.
-	c.gene = c.clamp((c.gene + cother.gene) / 2)
+	c.gene = c.clamp((c.gene + g.gene) / 2)
 }
 
 func (c *ConstrainedFloat) clamp(f float64) float64 {
