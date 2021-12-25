@@ -1,6 +1,7 @@
 package mu8
 
-// Genome contains one or more Gene instances which
+// Genome represents a candidate for genetic algorithm selection.
+// It is parametrized with the backing Gene type.
 type Genome[T any] interface {
 	// Simulate runs the backing simulation which the genetic
 	// algorithm seeks to optimize. It returns a number quantifying
@@ -20,7 +21,8 @@ type Genome[T any] interface {
 type Gene[T any] interface {
 	// Instance returns the backing gene data.
 	Instance() T
-	// Splice modifies the receiver with the attributes of the argument.
+	// Splice modifies the receiver with the attributes of the argument. It should NOT
+	// modify the argument.
 	Splice(T)
 	// Copy returns a copy of the gene so that modifying the receiver is not reflected in the returned parameter.
 	Copy() T

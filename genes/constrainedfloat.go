@@ -16,7 +16,7 @@ type ConstrainedFloat struct {
 }
 
 func (c *ConstrainedFloat) Mutate(rand float64) {
-	// Naive normal distribution.
+	// Uniform mutation distribution.
 	rand = c.min + rand*(c.max-c.min)
 	c.gene = rand
 }

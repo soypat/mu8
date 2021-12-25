@@ -17,7 +17,7 @@ type Population[T any] struct {
 	rng         rand.Rand
 }
 
-func NewPopulation[T any, Y mu8.Gene[T]](individuals []mu8.Genome[T], src rand.Source) Population[T] {
+func NewPopulation[T any](individuals []mu8.Genome[T], src rand.Source) Population[T] {
 	return Population[T]{
 		individuals: individuals,
 		rng:         *rand.New(src),
