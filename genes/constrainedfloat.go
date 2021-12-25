@@ -8,6 +8,16 @@ import (
 
 var _ mu8.Gene[*ConstrainedFloat] = (*ConstrainedFloat)(nil)
 
+// NewConstrainedFloat returns a mu8.Gene implementation for a number
+// that should be kept within bounds [min,max] during mutation.
+func NewConstrainedFloat(start, min, max float64) *ConstrainedFloat {
+	return &ConstrainedFloat{
+		gene: start,
+		min:  min,
+		max:  max,
+	}
+}
+
 // ConstrainedFloat implements Gene interface.
 type ConstrainedFloat struct {
 	// functional unit of heredity.
@@ -18,7 +28,7 @@ type ConstrainedFloat struct {
 func (c *ConstrainedFloat) Mutate(rand float64) {
 	// Uniform mutation distribution.
 	rand = c.min + rand*(c.max-c.min)
-	c.gene = rand
+	c.gene = c.clamp(rand)
 }
 
 func (c *ConstrainedFloat) Copy() *ConstrainedFloat {
