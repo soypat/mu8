@@ -20,11 +20,10 @@ type Genome interface {
 // Gene is the basic physical and functional unit of heredity.
 type Gene interface {
 	// Splice modifies the receiver with the attributes of the argument. It should NOT
-	// modify the argument.
+	// modify the argument. Splice is called during breeding of multiple Genomes.
 	Splice(Gene)
-	// Copy returns a copy of the gene so that modifying the receiver is not reflected in the returned parameter.
-	Copy() Gene
-	// CloneFrom copies the Gene argument into the receiver, replacing all genetic information.
+	// CloneFrom copies the Gene argument into the receiver, replacing all genetic information
+	// in receiving Gene.
 	CloneFrom(Gene)
 	// Mutate performs a mutation on the receiver. rand is a random number between [0, 1)
 	// to aid the user with randomness. The distribution of rand is expected to be normal.
