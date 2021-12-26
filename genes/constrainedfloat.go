@@ -34,6 +34,11 @@ func (c *ConstrainedFloat) Mutate(rand float64) {
 	c.gene = c.clamp(rand)
 }
 
+func (c *ConstrainedFloat) CloneFrom(g mu8.Gene) {
+	co := cfFromGene(g)
+	c.gene = co.gene
+}
+
 func (c *ConstrainedFloat) Copy() mu8.Gene { return c.CopyT() }
 
 func (c *ConstrainedFloat) CopyT() *ConstrainedFloat {
@@ -44,14 +49,19 @@ func (c *ConstrainedFloat) CopyT() *ConstrainedFloat {
 func (c *ConstrainedFloat) Instance() mu8.Gene { return c }
 
 func (c *ConstrainedFloat) Splice(g mu8.Gene) {
-	co, ok := g.(*ConstrainedFloat)
-	if !ok {
-		panic(ErrMismatchedGeneType.Error())
-	}
+	co := cfFromGene(g)
 	// Naive average.
 	c.gene = c.clamp((c.gene + co.gene) / 2)
 }
 
 func (c *ConstrainedFloat) clamp(f float64) float64 {
 	return math.Max(math.Min(f, c.max), c.min)
+}
+
+func cfFromGene(gene mu8.Gene) *ConstrainedFloat {
+	co, ok := gene.(*ConstrainedFloat)
+	if !ok {
+		panic(ErrMismatchedGeneType.Error())
+	}
+	return co
 }

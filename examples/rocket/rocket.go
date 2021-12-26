@@ -89,7 +89,7 @@ func (r *rocket) Len() int {
 	return len(r.stages) * NGenesPerStage
 }
 
-func (r *rocket) Clone() mu8.Genome {
+func (r *rocket) Clone() *rocket {
 	clone := &rocket{
 		CD:          r.CD,
 		payloadMass: r.payloadMass,

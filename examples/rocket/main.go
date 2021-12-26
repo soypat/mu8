@@ -61,10 +61,10 @@ func main() {
 	for i := range individuals {
 		clone := baseRocket.Clone()
 		mu8.Mutate(clone, src, 0.95)
-		individuals[i] = clone.(*rocket)
+		individuals[i] = clone
 	}
 
-	pop := genetic.NewPopulation(individuals, src)
+	pop := genetic.NewPopulation(individuals, func() *rocket { return baseRocket.Clone() }, src)
 	for i := 0; i < Ngen; i++ {
 		err := pop.Advance()
 		if err != nil {

@@ -11,6 +11,7 @@ import (
 // of Genetic Algorithm.
 type Population[G mu8.Genome] struct {
 	individuals  []G
+	generator    func() G
 	champ        G
 	champFitness float64
 	fitness      []float64
@@ -19,11 +20,13 @@ type Population[G mu8.Genome] struct {
 	rng          rand.Rand
 }
 
-func NewPopulation[G mu8.Genome](individuals []G, src rand.Source) Population[G] {
+func NewPopulation[G mu8.Genome](individuals []G, newIndividual func() G, src rand.Source) Population[G] {
 	return Population[G]{
 		individuals: individuals,
 		rng:         *rand.New(src),
 		fitness:     make([]float64, len(individuals)),
+		generator:   newIndividual,
+		champ:       newIndividual(),
 	}
 }
 
@@ -43,15 +46,16 @@ func (pop *Population[G]) Advance() error {
 			champIdx = i
 		}
 	}
+	pop.champ = pop.generator()
 	// Clone the champion so that his legacy may live on, untarnished by interbreeding and mutations.
-	var ok bool
-	pop.champ, ok = pop.individuals[champIdx].Clone().(G)
-	pop.champFitness = pop.fitness[champIdx]
-	if !ok {
-		return errGenomeCast
-	} else if pop.fitnessSum == 0 {
+	mu8.Clone(pop.champ, pop.individuals[champIdx])
+	bestFitness := pop.fitness[champIdx]
+	if pop.fitnessSum == 0 {
 		return ErrZeroFitnessSum
+	} else if bestFitness < pop.champFitness {
+		return ErrChampFitnessDecrease
 	}
+	pop.champFitness = bestFitness
 	return nil
 }
 
@@ -64,7 +68,7 @@ func (pop *Population[G]) Selection(mutationRate float64, polygamy int) error {
 	for i := 1; i < len(pop.individuals); i++ {
 		// Find the meanest, greenest individuals
 		parents := pop.selectFittest(polygamy + 1)
-		child := Breed(parents[0], parents...)
+		child := pop.breed(parents[0], parents...)
 		mu8.Mutate(child, &pop.rng, mutationRate)
 		newGeneration[i] = child
 	}
@@ -111,13 +115,14 @@ func slicemap(n int, f func(int) float64) []float64 {
 	return result
 }
 
-// Breed breeds receiver Genome with other genomes by splicing.
+// breed breeds receiver Genome with other genomes by splicing.
 // An argument of no genomes returns a non-referential copy of the receiver,
 // which could be described as a cloning procedure.
-func Breed[G mu8.Genome](firstParent G, conjugates ...G) G {
-	child := firstParent.Clone()
+func (pop *Population[G]) breed(firstParent G, conjugates ...G) G {
+	child := pop.generator()
+	mu8.Clone(child, firstParent)
 	if len(conjugates) == 0 {
-		return child.(G)
+		return child
 	}
 	for i := 0; i < child.Len(); i++ {
 		gene := child.GetGene(i)
@@ -125,5 +130,5 @@ func Breed[G mu8.Genome](firstParent G, conjugates ...G) G {
 			gene.Splice(c.GetGene(i))
 		}
 	}
-	return child.(G)
+	return child
 }

@@ -30,7 +30,8 @@ func ExampleGenome() {
 		individuals[i] = genome
 	}
 
-	pop := genetic.NewPopulation(individuals, src)
+	pop := genetic.NewPopulation(individuals, func() *genome { return newgenome(genomelen) }, src)
+	prevFitness := 0.0
 	for i := 0; i < Ngenerations; i++ {
 		err := pop.Advance()
 		if err != nil {
@@ -40,10 +41,14 @@ func ExampleGenome() {
 		if err != nil {
 			panic(err.Error())
 		}
+		champFitness := pop.ChampionFitness()
 		if i%(Ngenerations/Nprints) == 0 {
-			champFitness := pop.ChampionFitness()
 			fmt.Printf("champ fitness=%.3f\n", champFitness)
 		}
+		if champFitness < prevFitness {
+			panic("fitness not monotonically increasing")
+		}
+		prevFitness = champFitness
 	}
 	// Output:
 	// champ fitness=0.154
@@ -81,14 +86,4 @@ func (g *genome) Simulate() (fitness float64) {
 		fitness += g.genoma[i].Value()
 	}
 	return math.Max(0, fitness/float64(g.Len()))
-}
-
-func (g *genome) Clone() mu8.Genome {
-	clone := &genome{
-		genoma: make([]*genes.ConstrainedFloat, g.Len()),
-	}
-	for i := range clone.genoma {
-		clone.genoma[i] = g.genoma[i].Copy().(*genes.ConstrainedFloat)
-	}
-	return clone
 }

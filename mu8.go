@@ -12,7 +12,7 @@ type Genome interface {
 	GetGene(i int) Gene
 	// Clone produces a new copy of Genome with no past information of simulation.
 	// It should ideally hold no references to receiver to prevent data leaks.
-	Clone() Genome
+	// Clone() Genome
 	// Number of genes in genome.
 	Len() int
 }
@@ -24,6 +24,8 @@ type Gene interface {
 	Splice(Gene)
 	// Copy returns a copy of the gene so that modifying the receiver is not reflected in the returned parameter.
 	Copy() Gene
+	// CloneFrom copies the Gene argument into the receiver, replacing all genetic information.
+	CloneFrom(Gene)
 	// Mutate performs a mutation on the receiver. rand is a random number between [0, 1)
 	// to aid the user with randomness. The distribution of rand is expected to be normal.
 	Mutate(rand float64)
