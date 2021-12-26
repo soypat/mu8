@@ -32,8 +32,14 @@ func ExampleGenome() {
 
 	pop := genetic.NewPopulation(individuals, src)
 	for i := 0; i < Ngenerations; i++ {
-		pop.Advance()
-		pop.Selection(mutationRate, polygamy)
+		err := pop.Advance()
+		if err != nil {
+			panic(err.Error())
+		}
+		err = pop.Selection(mutationRate, polygamy)
+		if err != nil {
+			panic(err.Error())
+		}
 		if i%(Ngenerations/Nprints) == 0 {
 			champFitness := pop.ChampionFitness()
 			fmt.Printf("champ fitness=%.3f\n", champFitness)
