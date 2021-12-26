@@ -1,11 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
 
 	"github.com/soypat/mu8"
 	"github.com/soypat/mu8/genes"
+	"github.com/soypat/mu8/genetic"
 )
 
 const (
@@ -47,6 +49,14 @@ func main() {
 		mu8.Mutate[*rocket](clone, src) // fak... me...
 		individuals[i] = clone
 	}
+
+	pop := genetic.NewPopulation[*rocket](individuals, src)
+	for i := 0; i < 200; i++ {
+		pop.Advance()
+		pop.Selection(0.01, 1)
+	}
+	best := pop.Champion()
+	fmt.Println(best)
 }
 
 // atmosphere thermodynamic property calculation, done horribly wrong!
