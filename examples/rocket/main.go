@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"math"
 	"math/rand"
 
 	"github.com/soypat/mu8"
@@ -33,47 +32,51 @@ var baseRocket = &rocket{
 		{
 			isp:       300,
 			massStruc: 200,
-			massProp:  genes.NewConstrainedFloat(1500, 800, 3000),
-			deltaMass: genes.NewConstrainedFloat(13, 5, 30),
+			massProp:  genes.NewConstrainedFloat(800, 800, 3000),
+			deltaMass: genes.NewConstrainedFloat(30, 5, 100),
 			coastTime: genes.NewConstrainedFloat(10, 0, 300),
 		},
 	},
 }
 
 func main() {
+	const (
+		// How many iterations to print, spaced evenly between generations
+		// Do not set to less than 2.
+		Nprints = 10
+		// Number of generations to simulate.
+		Ngen = 100
+		// Number of individuals in populations
+		Nindividuals = 10
+		// Polygamy (how many partners a rocket has)
+		polygamy = 2
+		// Mutation rate
+		mutrate = 0.06
+	)
 	type genoma = *rocket
 	src := rand.NewSource(1)
-	individuals := make([]*rocket, 100)
+	individuals := make([]*rocket, Nindividuals)
 	for i := range individuals {
 		clone := baseRocket.Clone()
-		mu8.Mutate(clone, src, 1)
+		mu8.Mutate(clone, src, 0.95)
 		individuals[i] = clone.(*rocket)
 	}
 
 	pop := genetic.NewPopulation(individuals, src)
-	for i := 0; i < 200; i++ {
-		pop.Advance()
-		pop.Selection(0.01, 1)
-		bestFitness := pop.ChampionFitness()
-		fmt.Printf("champHeight:%.1fkm\n", bestFitness)
+	for i := 0; i < Ngen; i++ {
+		err := pop.Advance()
+		if err != nil {
+			panic(err)
+		}
+		err = pop.Selection(mutrate, polygamy)
+		if err != nil {
+			panic(err)
+		}
+		if i%(Ngen/(Nprints-1)) == 0 || i == Ngen-1 {
+			bestFitness := pop.ChampionFitness()
+			fmt.Printf("champHeight:%.3fkm\n", bestFitness)
+		}
 	}
 	best := pop.Champion()
 	fmt.Println("our champion:", best)
-}
-
-// atmosphere thermodynamic property calculation, done horribly wrong!
-func atmos(height float64) (Temp, Press, Density float64) {
-	const (
-		baseTemp, spaceTemp = 300, 7
-		baseRho, spaceRho   = 1.2, 1e-6
-		baseP, spaceP       = 101325., 1e-6
-	)
-	// Normalize height so 0km = -2, 60km=+2 => 30km = 0. Domain ratio 60e3:4
-	normalized := (height + 30e3) / (60e3 / 4)
-	cmpErf := (1 + math.Erfc(normalized)) / 2
-
-	Density = spaceRho + (baseRho-spaceRho)*cmpErf
-	Temp = spaceTemp + (baseTemp-spaceTemp)*cmpErf
-	Press = spaceP + (baseP-spaceP)*cmpErf
-	return Temp, Press, Density
 }

@@ -88,3 +88,20 @@ func (r *rocket) Clone() mu8.Genome {
 	}
 	return clone
 }
+
+// atmosphere thermodynamic property calculation, done horribly wrong!
+func atmos(height float64) (Temp, Press, Density float64) {
+	const (
+		baseTemp, spaceTemp = 300, 7
+		baseRho, spaceRho   = 1.2, 1e-6
+		baseP, spaceP       = 101325., 1e-6
+	)
+	// Normalize height so 0km = -2, 60km=+2 => 30km = 0. Domain ratio 60e3:4
+	normalized := (height + 30e3) / (60e3 / 4)
+	cmpErf := (1 + math.Erfc(normalized)) / 2
+
+	Density = spaceRho + (baseRho-spaceRho)*cmpErf
+	Temp = spaceTemp + (baseTemp-spaceTemp)*cmpErf
+	Press = spaceP + (baseP-spaceP)*cmpErf
+	return Temp, Press, Density
+}

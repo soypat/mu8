@@ -27,14 +27,14 @@ func NewPopulation[G mu8.Genome](individuals []G, src rand.Source) Population[G]
 	}
 }
 
-func (pop *Population[G]) Advance() {
+func (pop *Population[G]) Advance() error {
 	pop.fitnessSum = 0
 	maxFitness := math.Inf(-1)
 	champIdx := -1
 	for i := range pop.individuals {
 		fitness := pop.individuals[i].Simulate()
 		if fitness < 0 {
-			panic("fitness cannot yield negative values. Use zero instead.")
+			return ErrNegativeFitness
 		}
 		pop.fitnessSum += fitness
 		pop.fitness[i] = fitness
@@ -46,14 +46,18 @@ func (pop *Population[G]) Advance() {
 	// Clone the champion so that his legacy may live on, untarnished by interbreeding and mutations.
 	var ok bool
 	pop.champ, ok = pop.individuals[champIdx].Clone().(G)
+	pop.champFitness = pop.fitness[champIdx]
 	if !ok {
-		panic("theoretically unreachable. Bad Genome->G cast")
+		return errGenomeCast
+	} else if pop.fitnessSum == 0 {
+		return ErrZeroFitnessSum
 	}
+	return nil
 }
 
-func (pop *Population[G]) Selection(mutationRate float64, polygamy int) {
+func (pop *Population[G]) Selection(mutationRate float64, polygamy int) error {
 	if polygamy < 0 || polygamy > len(pop.individuals) {
-		panic("polygamy parameter must be in range [0, Nindividuals)")
+		return ErrBadPolygamy
 	}
 	newGeneration := make([]G, len(pop.individuals))
 	// Skip first index, reserved for our champion.
@@ -68,6 +72,7 @@ func (pop *Population[G]) Selection(mutationRate float64, polygamy int) {
 	newGeneration[0] = pop.champ
 	pop.individuals = newGeneration
 	pop.gen++
+	return nil
 }
 
 func (pop *Population[G]) selectFittest(sample int) (fittest []G) {
