@@ -6,7 +6,7 @@ import (
 	"github.com/soypat/mu8"
 )
 
-var _ mu8.Gene[*ConstrainedFloat] = (*ConstrainedFloat)(nil)
+var _ mu8.Gene = (*ConstrainedFloat)(nil)
 
 // NewConstrainedFloat returns a mu8.Gene implementation for a number
 // that should be kept within bounds [min,max] during mutation.
@@ -34,16 +34,22 @@ func (c *ConstrainedFloat) Mutate(rand float64) {
 	c.gene = c.clamp(rand)
 }
 
-func (c *ConstrainedFloat) Copy() *ConstrainedFloat {
+func (c *ConstrainedFloat) Copy() mu8.Gene { return c.CopyT() }
+
+func (c *ConstrainedFloat) CopyT() *ConstrainedFloat {
 	clone := *c
 	return &clone
 }
 
-func (c *ConstrainedFloat) Instance() *ConstrainedFloat { return c }
+func (c *ConstrainedFloat) Instance() mu8.Gene { return c }
 
-func (c *ConstrainedFloat) Splice(g *ConstrainedFloat) {
+func (c *ConstrainedFloat) Splice(g mu8.Gene) {
+	co, ok := g.(*ConstrainedFloat)
+	if !ok {
+		panic(ErrMismatchedGeneType.Error())
+	}
 	// Naive average.
-	c.gene = c.clamp((c.gene + g.gene) / 2)
+	c.gene = c.clamp((c.gene + co.gene) / 2)
 }
 
 func (c *ConstrainedFloat) clamp(f float64) float64 {

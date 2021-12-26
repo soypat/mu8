@@ -1,6 +1,7 @@
 package genetic
 
 import (
+	"math"
 	"math/rand"
 
 	"github.com/soypat/mu8"
@@ -8,47 +9,62 @@ import (
 
 // Population provides a generic implementation
 // of Genetic Algorithm.
-type Population[T any] struct {
-	individuals []mu8.Genome[T]
-	champ       mu8.Genome[T]
-	fitness     []float64
-	fitnessSum  float64
-	gen         int
-	rng         rand.Rand
+type Population[G mu8.Genome] struct {
+	individuals  []G
+	champ        G
+	champFitness float64
+	fitness      []float64
+	fitnessSum   float64
+	gen          int
+	rng          rand.Rand
 }
 
-func NewPopulation[T any](individuals []mu8.Genome[T], src rand.Source) Population[T] {
-	return Population[T]{
+func NewPopulation[G mu8.Genome](individuals []G, src rand.Source) Population[G] {
+	return Population[G]{
 		individuals: individuals,
 		rng:         *rand.New(src),
 		fitness:     make([]float64, len(individuals)),
 	}
 }
 
-func (pop *Population[T]) Advance() {
-	var maxFitness float64
+func (pop *Population[G]) Advance() error {
+	pop.fitnessSum = 0
+	maxFitness := math.Inf(-1)
 	champIdx := -1
 	for i := range pop.individuals {
 		fitness := pop.individuals[i].Simulate()
+		if fitness < 0 {
+			return ErrNegativeFitness
+		}
+		pop.fitnessSum += fitness
 		pop.fitness[i] = fitness
 		if fitness > maxFitness {
 			maxFitness = fitness
 			champIdx = i
 		}
-		pop.fitnessSum += fitness
 	}
 	// Clone the champion so that his legacy may live on, untarnished by interbreeding and mutations.
-	pop.champ = pop.individuals[champIdx].Clone()
+	var ok bool
+	pop.champ, ok = pop.individuals[champIdx].Clone().(G)
+	pop.champFitness = pop.fitness[champIdx]
+	if !ok {
+		return errGenomeCast
+	} else if pop.fitnessSum == 0 {
+		return ErrZeroFitnessSum
+	}
+	return nil
 }
 
-func (pop *Population[T]) Selection(mutationRate float64, polygamy int) {
-	newGeneration := make([]mu8.Genome[T], len(pop.individuals))
+func (pop *Population[G]) Selection(mutationRate float64, polygamy int) error {
+	if polygamy < 0 || polygamy > len(pop.individuals) {
+		return ErrBadPolygamy
+	}
+	newGeneration := make([]G, len(pop.individuals))
 	// Skip first index, reserved for our champion.
 	for i := 1; i < len(pop.individuals); i++ {
-		p := pop.individuals[i]
 		// Find the meanest, greenest individuals
-		parents := pop.selectFittest(polygamy)
-		child := Breed(p, parents...)
+		parents := pop.selectFittest(polygamy + 1)
+		child := Breed(parents[0], parents...)
 		mu8.Mutate(child, &pop.rng, mutationRate)
 		newGeneration[i] = child
 	}
@@ -56,9 +72,10 @@ func (pop *Population[T]) Selection(mutationRate float64, polygamy int) {
 	newGeneration[0] = pop.champ
 	pop.individuals = newGeneration
 	pop.gen++
+	return nil
 }
 
-func (pop *Population[T]) selectFittest(sample int) (fittest []mu8.Genome[T]) {
+func (pop *Population[G]) selectFittest(sample int) (fittest []G) {
 	// Quick return for clone case.
 	if sample == 0 {
 		return nil // make([]mu8.Genome, 0) // empty slice
@@ -69,6 +86,8 @@ func (pop *Population[T]) selectFittest(sample int) (fittest []mu8.Genome[T]) {
 	for i := 0; len(fittest) < sample; i++ {
 		runningSum += pop.fitness[i]
 		for _, threshold := range luckOfTheFit {
+			// TODO: This code has to be overhauled so same parent is not selected
+			// more than once.
 			if runningSum > threshold {
 				fittest = append(fittest, pop.individuals[i])
 			}
@@ -77,8 +96,11 @@ func (pop *Population[T]) selectFittest(sample int) (fittest []mu8.Genome[T]) {
 	return fittest
 }
 
-func (pop *Population[T]) Champion() mu8.Genome[T] {
+func (pop *Population[G]) Champion() G {
 	return pop.champ
+}
+func (pop *Population[G]) ChampionFitness() float64 {
+	return pop.champFitness
 }
 
 func slicemap(n int, f func(int) float64) []float64 {
@@ -92,16 +114,16 @@ func slicemap(n int, f func(int) float64) []float64 {
 // Breed breeds receiver Genome with other genomes by splicing.
 // An argument of no genomes returns a non-referential copy of the receiver,
 // which could be described as a cloning procedure.
-func Breed[T any](firstParent mu8.Genome[T], conjugates ...mu8.Genome[T]) mu8.Genome[T] {
+func Breed[G mu8.Genome](firstParent G, conjugates ...G) G {
 	child := firstParent.Clone()
 	if len(conjugates) == 0 {
-		return child
+		return child.(G)
 	}
 	for i := 0; i < child.Len(); i++ {
 		gene := child.GetGene(i)
 		for _, c := range conjugates {
-			gene.Splice(c.GetGene(i).Instance())
+			gene.Splice(c.GetGene(i))
 		}
 	}
-	return child
+	return child.(G)
 }

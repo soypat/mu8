@@ -1,9 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"math"
 
-	"github.com/soypat/mu8/genes"
+	"github.com/soypat/mu8"
 )
 
 // Rocket is the full genome.
@@ -14,6 +15,16 @@ type rocket struct {
 	expendedFuel [Nstages]float64
 	burnoutTime  [Nstages]float64
 	stages       [Nstages]stage
+}
+
+func (r *rocket) String() (output string) {
+	for k := range r.stages {
+		stage := r.stages[k]
+		propmass := stage.massProp.Value()
+		output += fmt.Sprintf("\nStage %d: coast=%.1fs, propMass=%.1fkg, Δm=%.2fkg/s, totalMass=%.1f",
+			k, stage.coastTime.Value(), propmass, stage.deltaMass.Value(), stage.massStruc+propmass)
+	}
+	return output
 }
 
 func (r *rocket) Simulate() (fitness float64) {
@@ -66,7 +77,7 @@ func (r *rocket) mass(currentStage int) (mass float64) {
 	return mass + r.payloadMass
 }
 
-func (r *rocket) GetGene(i int) *genes.ConstrainedFloat {
+func (r *rocket) GetGene(i int) mu8.Gene {
 	NGenesPerStage := r.stages[0].Len()
 	stageIdx := i / NGenesPerStage
 	geneIdx := i % NGenesPerStage
@@ -78,7 +89,7 @@ func (r *rocket) Len() int {
 	return len(r.stages) * NGenesPerStage
 }
 
-func (r *rocket) Clone() *rocket {
+func (r *rocket) Clone() mu8.Genome {
 	clone := &rocket{
 		CD:          r.CD,
 		payloadMass: r.payloadMass,
@@ -87,4 +98,21 @@ func (r *rocket) Clone() *rocket {
 		clone.stages[k] = *r.stages[k].Clone()
 	}
 	return clone
+}
+
+// atmosphere thermodynamic property calculation, done horribly wrong!
+func atmos(height float64) (Temp, Press, Density float64) {
+	const (
+		baseTemp, spaceTemp = 300, 7
+		baseRho, spaceRho   = 1.2, 1e-6
+		baseP, spaceP       = 101325., 1e-6
+	)
+	// Normalize height so 0km = -2, 60km=+2 => 30km = 0. Domain ratio 60e3:4
+	normalized := (height + 30e3) / (60e3 / 4)
+	cmpErf := (1 + math.Erfc(normalized)) / 2
+
+	Density = spaceRho + (baseRho-spaceRho)*cmpErf
+	Temp = spaceTemp + (baseTemp-spaceTemp)*cmpErf
+	Press = spaceP + (baseP-spaceP)*cmpErf
+	return Temp, Press, Density
 }
