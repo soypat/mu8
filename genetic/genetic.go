@@ -49,7 +49,7 @@ func (pop *Population[T]) Selection(mutationRate float64, polygamy int) {
 		// Find the meanest, greenest individuals
 		parents := pop.selectFittest(polygamy)
 		child := Breed(p, parents...)
-		pop.Mutate(child, mutationRate)
+		mu8.Mutate(child, &pop.rng, mutationRate)
 		newGeneration[i] = child
 	}
 	// Looking out for our one and only, Champ.
@@ -104,14 +104,4 @@ func Breed[T any](firstParent mu8.Genome[T], conjugates ...mu8.Genome[T]) mu8.Ge
 		}
 	}
 	return child
-}
-
-func (pop *Population[T]) Mutate(target mu8.Genome[T], mutationRate float64) {
-	for i := 0; i < target.Len(); i++ {
-		gene := target.GetGene(i)
-		random := pop.rng.Float64()
-		if random < mutationRate {
-			gene.Mutate(pop.rng.Float64())
-		}
-	}
 }

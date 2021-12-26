@@ -41,16 +41,17 @@ var baseRocket = &rocket{
 }
 
 func main() {
+	type GeneUnit = *genes.ConstrainedFloat
 	src := rand.NewSource(1)
 	individuals := make([]*rocket, 100)
 	for i := range individuals {
 		clone := baseRocket.Clone()
 		// Anagnorisis : "(in ancient Greek tragedy) the critical moment of recognition or discovery, especially preceding peripeteia."
-		mu8.Mutate[*rocket](clone, src) // fak... me...
+		mu8.Mutate[GeneUnit](clone, src, 1) // fak... me...
 		individuals[i] = clone
 	}
 
-	pop := genetic.NewPopulation[*rocket](individuals, src)
+	pop := genetic.NewPopulation[GeneUnit](individuals, src)
 	for i := 0; i < 200; i++ {
 		pop.Advance()
 		pop.Selection(0.01, 1)
