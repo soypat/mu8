@@ -12,6 +12,7 @@ Steps
 
 
 ### Info
+* [`mu8.go`](./mu8.go) `Genome` and `Gene` interface definitions. Users should implement `Genome` interface and use `Gene` implementations from `genes` package.
 * `genetic` directory contains genetic algorithm implementation
 * `genes` contains useful `Gene` interface implementations.
 
@@ -19,19 +20,19 @@ Steps
 See [`rocket`](./examples/rocket/main.go) for a demonstration on rocket stage optimization. 
 Below is the output of said program
 ```
-champHeight:118.753km
-champHeight:118.753km
-champHeight:118.753km
-champHeight:118.753km
-champHeight:118.753km
-champHeight:122.947km
-champHeight:123.783km
-champHeight:123.783km
-champHeight:123.783km
-champHeight:123.783km
+champHeight:101.619km
+champHeight:138.558km
+champHeight:141.474km
+champHeight:141.474km
+champHeight:141.474km
+champHeight:141.474km
+champHeight:141.474km
+champHeight:141.478km
+champHeight:141.478km
+champHeight:141.538km
 our champion: 
-Stage 0: coast=181.3s, propMass=1157.9kg, Δm=90.79kg/s, totalMass=1357.9
-Stage 1: coast=119.7s, propMass=55.9kg, Δm=1.68kg/s, totalMass=75.9
+Stage 0: coast=135.2s, propMass=195.4kg, Δm=99.77kg/s, totalMass=395.4
+Stage 1: coast=145.9s, propMass=1.2kg, Δm=0.14kg/s, totalMass=21.2
 ```
 
 ### CodeBullet's example

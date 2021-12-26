@@ -20,6 +20,8 @@ type Population[G mu8.Genome] struct {
 	rng          rand.Rand
 }
 
+// NewPopulation should be called when instantiating a new
+// optimization instance of Genetic Algorithm.
 func NewPopulation[G mu8.Genome](individuals []G, newIndividual func() G, src rand.Source) Population[G] {
 	return Population[G]{
 		individuals: individuals,
@@ -30,6 +32,13 @@ func NewPopulation[G mu8.Genome](individuals []G, newIndividual func() G, src ra
 	}
 }
 
+// Individuals returns a reference the pool of individuals participating in
+// the simulation. Calling Selection will update the value returned by
+// Individuals if not cloned before calling Selection.
+func (pop *Population[G]) Individuals() []G { return pop.individuals }
+
+// Advance simulates current population and saves fitness scores. Multiple
+// calls to Advance without calling Selection may have undesired effects.
 func (pop *Population[G]) Advance() error {
 	pop.fitnessSum = 0
 	maxFitness := math.Inf(-1)
@@ -59,6 +68,10 @@ func (pop *Population[G]) Advance() error {
 	return nil
 }
 
+// Selection performs natural selection of individuals in the population.
+// It first breeds individuals (fittest are most likely to be bred) and then
+// mutates the babies obtained from the breeding procedure. The Individuals
+// are updated once this function terminates.
 func (pop *Population[G]) Selection(mutationRate float64, polygamy int) error {
 	if polygamy < 0 || polygamy > len(pop.individuals) {
 		return ErrBadPolygamy
@@ -79,6 +92,8 @@ func (pop *Population[G]) Selection(mutationRate float64, polygamy int) error {
 	return nil
 }
 
+// selectFittest selects `sample` individuals from the population and returns a slice
+// containing them. The most fittest are the most likely to be selected.
 func (pop *Population[G]) selectFittest(sample int) (fittest []G) {
 	// Quick return for clone case.
 	if sample == 0 {
@@ -100,9 +115,14 @@ func (pop *Population[G]) selectFittest(sample int) (fittest []G) {
 	return fittest
 }
 
+// Champion returns the best candidate of the population, this
+// individual posessing the highest fitness score from last call to Advance().
 func (pop *Population[G]) Champion() G {
 	return pop.champ
 }
+
+// ChampionFitness returns the highest fitness score of the population found
+// during the last call to Advance().
 func (pop *Population[G]) ChampionFitness() float64 {
 	return pop.champFitness
 }

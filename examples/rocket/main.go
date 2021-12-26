@@ -27,16 +27,16 @@ var baseRocket = &rocket{
 			massStruc: 200,
 			// The way this works is the first value is the starting value,
 			// other two are the permissible range the value may take during optimization.
-			massProp:  genes.NewConstrainedFloat(800, 800, 3000),
-			deltaMass: genes.NewConstrainedFloat(30, 5, 100),
-			coastTime: genes.NewConstrainedFloat(10, 0, 300),
+			massProp:  genes.NewConstrainedFloat(0, 0, 3000),
+			deltaMass: genes.NewConstrainedFloat(0, 0, 100),
+			coastTime: genes.NewConstrainedFloat(0, 0, 300),
 		},
 		{
 			isp:       300,
 			massStruc: 20,
-			massProp:  genes.NewConstrainedFloat(50, 30, 100),
-			deltaMass: genes.NewConstrainedFloat(2, 1, 3),
-			coastTime: genes.NewConstrainedFloat(10, 0, 300),
+			massProp:  genes.NewConstrainedFloat(0, 0, 100),
+			deltaMass: genes.NewConstrainedFloat(0, 0, 3),
+			coastTime: genes.NewConstrainedFloat(0, 0, 300),
 		},
 	},
 }
@@ -47,20 +47,20 @@ func main() {
 		// Do not set to less than 2.
 		Nprints = 10
 		// Number of generations to simulate.
-		Ngen = 100
+		Ngen = 1000
 		// Number of individuals in populations
-		Nindividuals = 10
+		Nindividuals = 4
 		// Polygamy (how many partners a rocket has)
-		polygamy = 2
+		polygamy = 1
 		// Mutation rate
 		mutrate = 0.06
 	)
 	type genoma = *rocket
-	src := rand.NewSource(1)
+	src := rand.NewSource(2)
 	individuals := make([]*rocket, Nindividuals)
 	for i := range individuals {
 		clone := baseRocket.Clone()
-		mu8.Mutate(clone, src, 0.95)
+		mu8.Mutate(clone, src, 0.4)
 		individuals[i] = clone
 	}
 

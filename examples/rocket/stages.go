@@ -36,8 +36,8 @@ func (s *stage) Clone() *stage {
 	return &stage{
 		massStruc: s.massStruc,
 		isp:       s.isp,
-		massProp:  s.massProp.CopyT(),
-		deltaMass: s.deltaMass.CopyT(),
-		coastTime: s.coastTime.CopyT(),
+		massProp:  s.massProp.Copy(),
+		deltaMass: s.deltaMass.Copy(),
+		coastTime: s.coastTime.Copy(),
 	}
 }
