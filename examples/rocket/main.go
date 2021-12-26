@@ -43,10 +43,9 @@ func main() {
 	individuals := make([]*rocket, 100)
 	for i := range individuals {
 		clone := baseRocket.Clone()
-		mu8.Mutate[*rocket, *genes.ConstrainedFloat](clone, src)
+		mu8.Mutate[*rocket](clone, src) // fak... me...
+		individuals[i] = clone
 	}
-	// mu8.Mutate[*rocket, *genes.ConstrainedFloat](individuals, src)
-
 }
 
 // atmosphere thermodynamic property calculation, done horribly wrong!

@@ -25,6 +25,9 @@ type ConstrainedFloat struct {
 	max, min float64
 }
 
+// Value returns actual value of constrained float.
+func (c *ConstrainedFloat) Value() float64 { return c.gene }
+
 func (c *ConstrainedFloat) Mutate(rand float64) {
 	// Uniform mutation distribution.
 	rand = c.min + rand*(c.max-c.min)
