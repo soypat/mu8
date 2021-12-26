@@ -43,6 +43,7 @@ func main() {
 	individuals := make([]*rocket, 100)
 	for i := range individuals {
 		clone := baseRocket.Clone()
+		// Anagnorisis : "(in ancient Greek tragedy) the critical moment of recognition or discovery, especially preceding peripeteia."
 		mu8.Mutate[*rocket](clone, src) // fak... me...
 		individuals[i] = clone
 	}
