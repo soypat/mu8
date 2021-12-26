@@ -30,7 +30,9 @@ func ExampleGenome() {
 		individuals[i] = genome
 	}
 
-	pop := genetic.NewPopulation(individuals, func() *genome { return newgenome(genomelen) }, src)
+	pop := genetic.NewPopulation(individuals, src, func() *genome {
+		return newgenome(genomelen)
+	})
 	prevFitness := 0.0
 	for i := 0; i < Ngenerations; i++ {
 		err := pop.Advance()

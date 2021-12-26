@@ -22,7 +22,24 @@ type Population[G mu8.Genome] struct {
 
 // NewPopulation should be called when instantiating a new
 // optimization instance of Genetic Algorithm.
-func NewPopulation[G mu8.Genome](individuals []G, newIndividual func() G, src rand.Source) Population[G] {
+//
+// individuals are the initial population and should be independent of one another. These
+// implement the mu8.Genome interface.
+//
+// newIndividual should instantiate a blank-slate Genome that is ready for cloning via
+// mu8.Clone. Changes to newIndividual result should not be reflected in other individuals in
+// the algorithm.
+//
+// src provides randomness necessary for the Genetic Algorithm to work. Use math.NewSource(1)
+// for consistent results. It is not recommended for one to use a crypto/rand source directly.
+// If a true random run is required then it is strongly suggested rand.NewSource(trueRandomSeed)
+// is used and the seed saved in between runs to be able to replicate bugs.
+//
+// Example:
+//  pop := NewPopulation([]*ind{a, b, c}, rand.NewSource(1), func() *ind {
+//		return newind() // return a blank slate individual
+//  })
+func NewPopulation[G mu8.Genome](individuals []G, src rand.Source, newIndividual func() G) Population[G] {
 	return Population[G]{
 		individuals: individuals,
 		rng:         *rand.New(src),

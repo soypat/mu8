@@ -64,7 +64,7 @@ func main() {
 		individuals[i] = clone
 	}
 
-	pop := genetic.NewPopulation(individuals, func() *rocket { return baseRocket.Clone() }, src)
+	pop := genetic.NewPopulation(individuals, src, func() *rocket { return baseRocket.Clone() })
 	for i := 0; i < Ngen; i++ {
 		err := pop.Advance()
 		if err != nil {
