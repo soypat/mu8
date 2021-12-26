@@ -19,7 +19,19 @@ Steps
 See [`rocket`](./examples/rocket/main.go) for a demonstration on rocket stage optimization. 
 Below is the output of said program
 ```
-
+champHeight:118.753km
+champHeight:118.753km
+champHeight:118.753km
+champHeight:118.753km
+champHeight:118.753km
+champHeight:122.947km
+champHeight:123.783km
+champHeight:123.783km
+champHeight:123.783km
+champHeight:123.783km
+our champion: 
+Stage 0: coast=181.3s, propMass=1157.9kg, Δm=90.79kg/s, totalMass=1357.9
+Stage 1: coast=119.7s, propMass=55.9kg, Δm=1.68kg/s, totalMass=75.9
 ```
 
 ### CodeBullet's example
