@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"math"
 
 	"github.com/soypat/mu8"
@@ -14,6 +15,16 @@ type rocket struct {
 	expendedFuel [Nstages]float64
 	burnoutTime  [Nstages]float64
 	stages       [Nstages]stage
+}
+
+func (r *rocket) String() (output string) {
+	for k := range r.stages {
+		stage := r.stages[k]
+		propmass := stage.massProp.Value()
+		output += fmt.Sprintf("\nStage %d: coast=%.1fs, propMass=%.1fkg, Δm=%.2fkg/s, totalMass=%.1f",
+			k, stage.coastTime.Value(), propmass, stage.deltaMass.Value(), stage.massStruc+propmass)
+	}
+	return output
 }
 
 func (r *rocket) Simulate() (fitness float64) {

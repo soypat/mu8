@@ -24,16 +24,18 @@ var baseRocket = &rocket{
 	stages: [Nstages]stage{
 		{
 			isp:       300,
-			massStruc: 20,
-			massProp:  genes.NewConstrainedFloat(50, 30, 100),
-			deltaMass: genes.NewConstrainedFloat(2, 1, 3),
+			massStruc: 200,
+			// The way this works is the first value is the starting value,
+			// other two are the permissible range the value may take during optimization.
+			massProp:  genes.NewConstrainedFloat(800, 800, 3000),
+			deltaMass: genes.NewConstrainedFloat(30, 5, 100),
 			coastTime: genes.NewConstrainedFloat(10, 0, 300),
 		},
 		{
 			isp:       300,
-			massStruc: 200,
-			massProp:  genes.NewConstrainedFloat(800, 800, 3000),
-			deltaMass: genes.NewConstrainedFloat(30, 5, 100),
+			massStruc: 20,
+			massProp:  genes.NewConstrainedFloat(50, 30, 100),
+			deltaMass: genes.NewConstrainedFloat(2, 1, 3),
 			coastTime: genes.NewConstrainedFloat(10, 0, 300),
 		},
 	},

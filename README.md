@@ -15,7 +15,14 @@ Steps
 * `genetic` directory contains genetic algorithm implementation
 * `genes` contains useful `Gene` interface implementations.
 
-### Example
+### μ8 examples
+See [`rocket`](./examples/rocket/main.go) for a demonstration on rocket stage optimization. 
+Below is the output of said program
+```
+
+```
+
+### CodeBullet's example
 The following command will run an example of what genetic algorithm is possible of doing.
 It is solving [CodeBullet's proposed problem](https://www.youtube.com/watch?v=BOZfhUcNiqk) of moving points 
 towards a goal point.
