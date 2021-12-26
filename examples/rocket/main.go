@@ -41,23 +41,24 @@ var baseRocket = &rocket{
 }
 
 func main() {
-	type GeneUnit = *genes.ConstrainedFloat
+	type genoma = *rocket
 	src := rand.NewSource(1)
 	individuals := make([]*rocket, 100)
 	for i := range individuals {
 		clone := baseRocket.Clone()
-		// Anagnorisis : "(in ancient Greek tragedy) the critical moment of recognition or discovery, especially preceding peripeteia."
-		mu8.Mutate[GeneUnit](clone, src, 1) // fak... me...
-		individuals[i] = clone
+		mu8.Mutate(clone, src, 1)
+		individuals[i] = clone.(*rocket)
 	}
 
-	pop := genetic.NewPopulation[GeneUnit](individuals, src)
+	pop := genetic.NewPopulation(individuals, src)
 	for i := 0; i < 200; i++ {
 		pop.Advance()
 		pop.Selection(0.01, 1)
+		bestFitness := pop.ChampionFitness()
+		fmt.Printf("champHeight:%.1fkm\n", bestFitness)
 	}
 	best := pop.Champion()
-	fmt.Println(best)
+	fmt.Println("our champion:", best)
 }
 
 // atmosphere thermodynamic property calculation, done horribly wrong!

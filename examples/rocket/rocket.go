@@ -3,7 +3,7 @@ package main
 import (
 	"math"
 
-	"github.com/soypat/mu8/genes"
+	"github.com/soypat/mu8"
 )
 
 // Rocket is the full genome.
@@ -66,7 +66,7 @@ func (r *rocket) mass(currentStage int) (mass float64) {
 	return mass + r.payloadMass
 }
 
-func (r *rocket) GetGene(i int) *genes.ConstrainedFloat {
+func (r *rocket) GetGene(i int) mu8.Gene {
 	NGenesPerStage := r.stages[0].Len()
 	stageIdx := i / NGenesPerStage
 	geneIdx := i % NGenesPerStage
@@ -78,7 +78,7 @@ func (r *rocket) Len() int {
 	return len(r.stages) * NGenesPerStage
 }
 
-func (r *rocket) Clone() *rocket {
+func (r *rocket) Clone() mu8.Genome {
 	clone := &rocket{
 		CD:          r.CD,
 		payloadMass: r.payloadMass,
