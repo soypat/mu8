@@ -1,4 +1,7 @@
 # μ8
+
+<img align="right" width="220px" src="https://user-images.githubusercontent.com/26156425/147426391-509addc8-cecf-45fe-ab0f-a52a0b809bb5.png">
+
 Genetic algorithm for machine learning. 
 Inspired by [CodeBullets amazing video](https://www.youtube.com/watch?v=BOZfhUcNiqk) on the subject.
 ---
