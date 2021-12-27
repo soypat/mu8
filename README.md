@@ -55,3 +55,8 @@ gen 30: totalfitness=1374.32, elitescore=11.98153
 gen 300: totalfitness=2169.45, elitescore=16.26937
 ```
 The score went from 10 to 16 with help of a genetic algorithm.
+
+### Logo work
+Gopher rendition by [Juliette Whittingslow](https://www.instagram.com/artewitty/).  
+Gopher design authored by [Renee French](https://www.instagram.com/reneefrench)
+is licensed by the Creative Commons Attribution 3.0 licensed.
