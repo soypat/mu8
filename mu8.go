@@ -20,12 +20,13 @@ type Gene interface {
 	// Splice modifies the receiver with the attributes of the argument. It should NOT
 	// modify the argument. Splice is called during breeding of multiple Genomes.
 	// It is expected Splice receives an argument matching the type of the receiver.
-	Splice(Gene)
+	// random is a randomly generated number in [0,1) to aid with randomness.
+	Splice(random float64, g Gene)
 	// CloneFrom copies the Gene argument into the receiver, replacing all genetic information
 	// in receiving Gene.
 	CloneFrom(Gene)
 	// Mutate performs a random mutation on the receiver. rand is a random number between [0, 1)
 	// which is usually calculated beforehand to determine if Gene is to be mutated.
 	// The distribution of rand is expected to be normal.
-	Mutate(rand float64)
+	Mutate(random float64)
 }
