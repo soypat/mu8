@@ -60,7 +60,8 @@ const Nindividuals = 100
 individuals := make([]*mygenome, Nindividuals)
 for i := 0; i < Nindividuals; i++ {
 	genome := newGenome(genomelen)
-	mu8.Mutate(genome, src, .1) // This spices up the initial population so fitnesses are not all zero.
+	// This spices up the initial population so fitnesses are not all zero.
+	mu8.Mutate(genome, src, .1)
 	individuals[i] = genome
 }
 
