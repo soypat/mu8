@@ -47,20 +47,20 @@ func main() {
 		// Do not set to less than 2.
 		Nprints = 10
 		// Number of generations to simulate.
-		Ngen = 1000
+		Ngen = 4000
 		// Number of individuals in populations
-		Nindividuals = 4
+		Nindividuals = 8
 		// Polygamy (how many partners a rocket has)
-		polygamy = 1
+		polygamy = 2
 		// Mutation rate
-		mutrate = 0.06
+		mutrate = 0.1
 	)
 	type genoma = *rocket
 	src := rand.NewSource(2)
 	individuals := make([]*rocket, Nindividuals)
 	for i := range individuals {
 		clone := baseRocket.Clone()
-		mu8.Mutate(clone, src, 0.4)
+		mu8.Mutate(clone, src, 0.3)
 		individuals[i] = clone
 	}
 

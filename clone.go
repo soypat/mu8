@@ -4,7 +4,7 @@ import "errors"
 
 // Clone clones the Genes of src to dst. It does not
 // modify src. dst should be initialized beforehand.
-func Clone[G Genome](dst, src G) error {
+func Clone(dst, src Genome) error {
 	if dst.Len() != src.Len() {
 		return errors.New("destination and source mismatch")
 	}

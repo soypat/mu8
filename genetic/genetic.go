@@ -161,10 +161,12 @@ func (pop *Population[G]) breed(firstParent G, conjugates ...G) G {
 	if len(conjugates) == 0 {
 		return child
 	}
+
 	for i := 0; i < child.Len(); i++ {
 		gene := child.GetGene(i)
 		for _, c := range conjugates {
-			gene.Splice(c.GetGene(i))
+			random := pop.rng.Float64()
+			gene.Splice(random, c.GetGene(i))
 		}
 	}
 	return child
