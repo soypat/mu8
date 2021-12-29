@@ -35,6 +35,16 @@ type ConstrainedFloat struct {
 // Value returns actual value of constrained float.
 func (c *ConstrainedFloat) Value() float64 { return c.gene }
 
+// SetValue sets the gene's actual value. This method may be useful
+// for setting best gene value for a single individual in the
+// population by hand between runs.
+func (c *ConstrainedFloat) SetValue(f float64) {
+	if f < c.min || f > c.maxMinus1+1 {
+		panic("value not within constraints")
+	}
+	c.gene = f
+}
+
 func (c *ConstrainedFloat) Mutate(random float64) {
 	// Uniform mutation distribution.
 	random = c.min + random*c.rangeLength()
