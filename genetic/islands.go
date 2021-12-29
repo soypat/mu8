@@ -46,3 +46,7 @@ func NewIslands[G mu8.Genome](Nislands int, individuals []G, src rand.Source, ne
 		islands: islands,
 	}
 }
+
+func (is Islands[G]) Islands() []Population[G] {
+	return is.islands
+}

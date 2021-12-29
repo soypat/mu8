@@ -1,6 +1,7 @@
 package genes
 
 import (
+	"fmt"
 	"math"
 
 	"github.com/soypat/mu8"
@@ -66,6 +67,27 @@ func (c *ConstrainedFloat) Splice(random float64, g mu8.Gene) {
 	randi := 1 - random
 	// Pick a random uniformly distributed gene between two values.
 	c.gene = c.clamp((c.gene*randi + co.gene*random) / 2)
+}
+
+func (c *ConstrainedFloat) Format(state fmt.State, verb rune) {
+	var val string
+	prec, okp := state.Precision()
+	width, okw := state.Width()
+	switch verb {
+	case 's', 'f':
+		if !okw && !okp {
+			val = fmt.Sprintf("%f", c.gene)
+		} else {
+			val = fmt.Sprintf("%[1]*.[2]*[3]f", width, prec, c.gene)
+		}
+	case 'v':
+		val = fmt.Sprintf("{gene:%g, min:%g, max:%g}", c.gene, c.min, c.maxMinus1+1)
+	case 'g':
+		val = fmt.Sprintf("%[1]*.[2]*[3]g", width, prec, c.gene)
+	default:
+		val = fmt.Sprintf("!ERR(%%%v)", verb)
+	}
+	fmt.Fprint(state, val)
 }
 
 func (c *ConstrainedFloat) clamp(f float64) float64 {
