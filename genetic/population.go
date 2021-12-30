@@ -76,10 +76,12 @@ func (pop *Population[G]) Advance() error {
 	// Clone the champion so that his legacy may live on, untarnished by interbreeding and mutations.
 	mu8.Clone(pop.champ, pop.individuals[champIdx])
 	bestFitness := pop.fitness[champIdx]
-	if pop.fitnessSum == 0 {
+	if bestFitness < pop.champFitness {
+		// This is a big error. It means new instances of individuals genes
+		// are linked to information readily modified by calls to Mutate.
+		panic(ErrChampFitnessDecrease)
+	} else if pop.fitnessSum == 0 {
 		return ErrZeroFitnessSum
-	} else if bestFitness < pop.champFitness {
-		return ErrChampFitnessDecrease
 	}
 	pop.champFitness = bestFitness
 	return nil
