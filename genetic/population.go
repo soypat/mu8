@@ -62,8 +62,11 @@ func (pop *Population[G]) Advance() error {
 	champIdx := -1
 	for i := range pop.individuals {
 		fitness := pop.individuals[i].Simulate()
+		// We now check for errors that impede the continuation of the algorithm.
 		if fitness < 0 {
 			return ErrNegativeFitness
+		} else if math.IsInf(fitness, 0) || math.IsNaN(fitness) {
+			return ErrInvalidFitness
 		}
 		pop.fitnessSum += fitness
 		pop.fitness[i] = fitness
@@ -77,8 +80,8 @@ func (pop *Population[G]) Advance() error {
 	mu8.Clone(pop.champ, pop.individuals[champIdx])
 	bestFitness := pop.fitness[champIdx]
 	if bestFitness < pop.champFitness {
-		// This is a big error. It means new instances of individuals genes
-		// are linked to information readily modified by calls to Mutate.
+		// This is a big error. It means new instances of individuals are
+		// affected by previous instances Simulation call or calls to gene's Mutate.
 		// If this panic triggers consider all champion data has been compromised
 		// and may not accurately represent "optimal" Genome.
 		panic(ErrCodependencyChampFitness)
@@ -118,15 +121,12 @@ func (pop *Population[G]) Selection(mutationRate float64, polygamy int) error {
 func (pop *Population[G]) selectFittest(sample int) (fittest []G) {
 	// Quick return for clone case.
 	if sample == 0 {
-		return nil // make([]mu8.Genome, 0) // empty slice
+		return nil
 	}
 	// The lucky few selected will statistically be more likely to be fitter, proportional to their fitness.
 	luckOfTheFit := slicemap(sample, func(int) float64 { return pop.fitnessSum * pop.rng.Float64() })
 	runningSum := 0.0
 	for i := 0; len(fittest) < sample; i++ {
-		// TODO(soypat): Modulus not OK way of preventing index panic since it may skew probability.
-		// This whole function needs to be refactored.
-		i = i % len(pop.fitness)
 		runningSum += pop.fitness[i]
 		for _, threshold := range luckOfTheFit {
 			// TODO(soypat): This code has to be overhauled so same parent is not selected
