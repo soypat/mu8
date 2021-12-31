@@ -16,12 +16,3 @@ func Mutate(g Genome, src rand.Source, mutationRate float64) {
 		}
 	}
 }
-
-func randfloat(r rand.Source) float64 {
-again:
-	f := float64(r.Int63()) / (1 << 63)
-	if f == 1 {
-		goto again // resample; this branch is taken O(never)
-	}
-	return f
-}
