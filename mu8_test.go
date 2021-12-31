@@ -47,16 +47,16 @@ func ExampleGenome() {
 		}
 	}
 	// Output:
-	// champ fitness=0.154
-	// champ fitness=0.886
-	// champ fitness=0.891
-	// champ fitness=0.908
-	// champ fitness=0.914
-	// champ fitness=0.932
-	// champ fitness=0.932
-	// champ fitness=0.932
-	// champ fitness=0.932
-	// champ fitness=0.943
+	// champ fitness=0.180
+	// champ fitness=0.942
+	// champ fitness=0.942
+	// champ fitness=0.949
+	// champ fitness=0.949
+	// champ fitness=0.949
+	// champ fitness=0.949
+	// champ fitness=0.949
+	// champ fitness=0.949
+	// champ fitness=0.953
 }
 
 type mygenome struct {

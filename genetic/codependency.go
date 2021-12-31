@@ -19,7 +19,7 @@ func FindCodependecy[G mu8.Genome](src rand.Source, newIndividual func() G) erro
 	if math.IsNaN(fit1) || math.IsNaN(fit2) {
 		return errors.New("NaN fitness")
 	} else if fit1 != fit2 {
-		return errors.New("codependency between simulation results of subsequent calls to newIndividual")
+		return errors.New("codependency between simulation results of subsequent calls to newIndividual. check for closure variable capture?")
 	} else if fit1 == 0 {
 		return errors.New("cannot reliably determine codependency with zero fitness simulation results")
 	}
@@ -30,7 +30,7 @@ func FindCodependecy[G mu8.Genome](src rand.Source, newIndividual func() G) erro
 		fit1 := parent1.Simulate()
 		g := parent1.GetGene(i)
 		// This line should have no effect.
-		g.Mutate(rng.Float64())
+		g.Mutate(rng)
 		fit2 := parent2.Simulate()
 		if math.IsNaN(fit1) || math.IsNaN(fit2) {
 			return errors.New("NaN fitness")

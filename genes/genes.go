@@ -2,6 +2,7 @@ package genes
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/soypat/mu8"
 )
@@ -18,3 +19,17 @@ func castGene[T mu8.Gene](gene mu8.Gene) T {
 	}
 	return g
 }
+
+// Compile time check of internal interface implementation
+
+type gene[T any] interface {
+	mu8.Gene
+	fmt.Stringer
+	Value() T
+	SetValue(v T)
+}
+
+var (
+	_ gene[float64] = (*ConstrainedFloat)(nil)
+	_ gene[float64] = (*NormalDistribution)(nil)
+)

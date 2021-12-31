@@ -3,11 +3,10 @@ package genes
 import (
 	"fmt"
 	"math"
+	"math/rand"
 
 	"github.com/soypat/mu8"
 )
-
-var _ mu8.Gene = (*ConstrainedFloat)(nil)
 
 // NewConstrainedFloat returns a mu8.Gene implementation for a number
 // that should be kept within bounds [min,max] during mutation.
@@ -46,8 +45,9 @@ func (c *ConstrainedFloat) SetValue(f float64) {
 	c.gene = f
 }
 
-func (c *ConstrainedFloat) Mutate(random float64) {
+func (c *ConstrainedFloat) Mutate(rng *rand.Rand) {
 	// Uniform mutation distribution.
+	random := rng.Float64()
 	random = c.min + random*c.rangeLength()
 	c.gene = c.clamp(random)
 }
@@ -62,8 +62,9 @@ func (c *ConstrainedFloat) Copy() *ConstrainedFloat {
 	return &clone
 }
 
-func (c *ConstrainedFloat) Splice(random float64, g mu8.Gene) {
+func (c *ConstrainedFloat) Splice(rng *rand.Rand, g mu8.Gene) {
 	co := castGene[*ConstrainedFloat](g)
+	random := rng.Float64()
 	randi := 1 - random
 	// Pick a random uniformly distributed gene between two values.
 	c.gene = c.clamp((c.gene*randi + co.gene*random) / 2)
@@ -96,4 +97,8 @@ func (c *ConstrainedFloat) clamp(f float64) float64 {
 
 func (c *ConstrainedFloat) rangeLength() float64 {
 	return c.maxMinus1 + 1 - c.min
+}
+
+func (c *ConstrainedFloat) String() string {
+	return fmt.Sprintf("%f", c.gene)
 }

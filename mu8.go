@@ -1,5 +1,7 @@
 package mu8
 
+import "math/rand"
+
 // Genome represents a candidate for genetic algorithm selection.
 // It is parametrized with the backing Gene type.
 type Genome interface {
@@ -8,9 +10,11 @@ type Genome interface {
 	// how well the Genome did in the simulation. This is then
 	// used to compare between other Genomes during the Selection phase.
 	Simulate() (fitness float64)
+
 	// GetGene gets ith gene in the Genome. It is expected the ith Genes
 	// of two Genomes in a Genetic Algorithm instance have matching types.
 	GetGene(i int) Gene
+
 	// Number of Genes in Genome.
 	Len() int
 }
@@ -20,13 +24,15 @@ type Gene interface {
 	// Splice modifies the receiver with the attributes of the argument. It should NOT
 	// modify the argument. Splice is called during breeding of multiple Genomes.
 	// It is expected Splice receives an argument matching the type of the receiver.
-	// random is a randomly generated number in [0,1) to aid with randomness.
-	Splice(random float64, g Gene)
+	// The rng argument intends to aid with randomness and Splice implementation process.
+	Splice(rng *rand.Rand, g Gene)
+
 	// CloneFrom copies the Gene argument into the receiver, replacing all genetic information
 	// in receiving Gene.
 	CloneFrom(Gene)
+
 	// Mutate performs a random mutation on the receiver. rand is a random number between [0, 1)
 	// which is usually calculated beforehand to determine if Gene is to be mutated.
-	// The distribution of rand is expected to be normal.
-	Mutate(random float64)
+	// The rng argument intends to aid with randomness and Mutate implementation process.
+	Mutate(rng *rand.Rand)
 }
