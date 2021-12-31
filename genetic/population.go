@@ -79,7 +79,9 @@ func (pop *Population[G]) Advance() error {
 	if bestFitness < pop.champFitness {
 		// This is a big error. It means new instances of individuals genes
 		// are linked to information readily modified by calls to Mutate.
-		panic(ErrChampFitnessDecrease)
+		// If this panic triggers consider all champion data has been compromised
+		// and may not accurately represent "optimal" Genome.
+		panic(ErrCodependencyChampFitness)
 	} else if pop.fitnessSum == 0 {
 		return ErrZeroFitnessSum
 	}
@@ -122,9 +124,12 @@ func (pop *Population[G]) selectFittest(sample int) (fittest []G) {
 	luckOfTheFit := slicemap(sample, func(int) float64 { return pop.fitnessSum * pop.rng.Float64() })
 	runningSum := 0.0
 	for i := 0; len(fittest) < sample; i++ {
+		// TODO(soypat): Modulus not OK way of preventing index panic since it may skew probability.
+		// This whole function needs to be refactored.
+		i = i % len(pop.fitness)
 		runningSum += pop.fitness[i]
 		for _, threshold := range luckOfTheFit {
-			// TODO: This code has to be overhauled so same parent is not selected
+			// TODO(soypat): This code has to be overhauled so same parent is not selected
 			// more than once.
 			if runningSum > threshold {
 				fittest = append(fittest, pop.individuals[i])

@@ -32,4 +32,5 @@ type gene[T any] interface {
 var (
 	_ gene[float64] = (*ConstrainedFloat)(nil)
 	_ gene[float64] = (*NormalDistribution)(nil)
+	_ gene[float64] = (*ConstrainedNormalDistr)(nil)
 )
