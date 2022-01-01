@@ -97,6 +97,9 @@ func (pop *Population[G]) Advance() error {
 // mutates the babies obtained from the breeding procedure. The Individuals
 // are updated once this function terminates.
 func (pop *Population[G]) Selection(mutationRate float64, polygamy int) error {
+	if mutationRate <= 0 || mutationRate > 1 {
+		return ErrBadMutationRate
+	}
 	if polygamy < 0 || polygamy > len(pop.individuals) {
 		return ErrBadPolygamy
 	}
@@ -176,4 +179,22 @@ func (pop *Population[G]) breed(firstParent G, conjugates ...G) G {
 		}
 	}
 	return child
+}
+
+// Not implemented.
+// bias is a first order convergence indicatior showing the average percentage
+// of the prominent value in each in each position of the individuals. A large bias
+// means low genotypic diversity, and vice versa.
+func (pop *Population[G]) bias() float64 {
+	sum := 0.0
+	N := 0.0
+	for _, fitness := range pop.fitness {
+		// We only take into account "live" Genomes for bias
+		if fitness != 0 {
+			sum += fitness
+			N++
+		}
+	}
+
+	return 1/N*math.Abs(sum-N/2) + 0.5
 }

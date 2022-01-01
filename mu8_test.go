@@ -12,7 +12,7 @@ import (
 // This simple program evolves
 // a genome to maximize it's ConstrainedFloat
 // genome so that it reaches the max value.
-func ExampleGenome() {
+func ExamplePopulation() {
 	src := rand.NewSource(1)
 	const (
 		Nprints      = 10
@@ -76,4 +76,48 @@ func (g *mygenome) Simulate() (fitness float64) {
 		fitness += g.genoma[i].Value()
 	}
 	return fitness / float64(g.Len())
+}
+
+func ExampleIslands() {
+	src := rand.NewSource(1)
+	const (
+		Ncrossovers      = 10
+		genomelen        = 5
+		Nislands         = 5
+		Nconcurrent      = Nislands // Must be <= number of islands.
+		Nindividuals     = 50
+		NgenPerCrossover = 2000
+		mutationRate     = 0.2
+		polygamy         = 2
+	)
+	individuals := make([]*mygenome, Nindividuals)
+	for i := 0; i < Nindividuals; i++ {
+		genome := newGenome(genomelen)
+		mu8.Mutate(genome, src, .80)
+		individuals[i] = genome
+	}
+
+	isls := genetic.NewIslands(Nislands, individuals, src, func() *mygenome {
+		return newGenome(genomelen)
+	})
+	for i := 0; i < Ncrossovers; i++ {
+		err := isls.Advance(mutationRate, polygamy, NgenPerCrossover, Nconcurrent)
+		if err != nil {
+			panic(err.Error())
+		}
+		isls.Crossover()
+		champFitness := isls.ChampionFitness()
+		fmt.Printf("champ fitness=%.3f\n", champFitness)
+	}
+	// Output:
+	// champ fitness=0.849
+	// champ fitness=0.849
+	// champ fitness=0.849
+	// champ fitness=0.941
+	// champ fitness=0.941
+	// champ fitness=0.941
+	// champ fitness=0.941
+	// champ fitness=0.941
+	// champ fitness=0.941
+	// champ fitness=0.941
 }
