@@ -16,6 +16,8 @@ var (
 	ErrBadPolygamy              = errors.New("bad polygamy: must be in range [0, Nindividuals)")
 	ErrBadMutationRate          = errors.New("bad mutation rate: must be in range (0, 1]")
 	ErrCodependencyChampFitness = errors.New("codependency found: champion fitness should be monotonically increasing. check for preserved references in newIndividual function. See FindCodependency")
+
+	errExitRequested = errors.New("call to Advance termination requested")
 	// This should never trigger.
 	errGenomeCast = errors.New("theoretically unreachable. Bad Genome->G cast. make sure your Genomes return same type")
 )

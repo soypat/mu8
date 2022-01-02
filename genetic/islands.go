@@ -1,6 +1,7 @@
 package genetic
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"sync"
@@ -105,7 +106,12 @@ func (is *island[G]) Individuals() []G {
 	return is.pop.individuals
 }
 
-func (is *Islands[G]) Advance(mutationRate float64, polygamy, Ngen, Nconcurrent int) (err error) {
+type errmsg struct {
+	err error
+	i   int
+}
+
+func (is *Islands[G]) Advance(ctx context.Context, mutationRate float64, polygamy, Ngen, Nconcurrent int) (err error) {
 	I := len(is.islands)
 
 	if Nconcurrent <= 0 {
@@ -117,7 +123,7 @@ func (is *Islands[G]) Advance(mutationRate float64, polygamy, Ngen, Nconcurrent 
 	} else if Ngen <= 1 {
 		panic("number of generations between crossovers should be positive and it is HIGHLY recommended it is above 1")
 	}
-
+	ctx, cancel := context.WithCancel(ctx)
 	defer func() {
 		a := recover()
 		if a != nil {
@@ -136,31 +142,63 @@ func (is *Islands[G]) Advance(mutationRate float64, polygamy, Ngen, Nconcurrent 
 	// When Ngen is implemented there shall be exactly I goroutines
 	// each entrusted with it's own population to prevent data-races.
 	var wg sync.WaitGroup
+
+	errChan := make(chan errmsg, I)
+	go func() {
+		select {
+		case <-ctx.Done():
+			for i := 0; i < I; i++ {
+				is.islands[i].pop.exit <- struct{}{} // Signal to end all calls to Advance immediately.
+			}
+		}
+	}()
 	for i := 0; i < I; i++ {
 		i := i // Loop variable escape for closures.
 		wg.Add(1)
 		go func() {
+			defer wg.Done()
 			for g := 0; g < Ngen; g++ {
 				checkin <- struct{}{}
 				err := is.islands[i].pop.Advance()
+				if err == nil && ctx.Err() != nil {
+					errChan <- errmsg{ctx.Err(), i}
+					return
+				}
 				if err != nil {
-					panic(err)
+					errChan <- errmsg{err, i}
+					return
 				}
 				err = is.islands[i].pop.Selection(mutationRate, polygamy)
+				if err == nil && ctx.Err() != nil {
+					errChan <- errmsg{ctx.Err(), i}
+					return
+				}
 				if err != nil {
-					panic(err)
+					errChan <- errmsg{err, i}
+					return
 				}
 				<-checkin
 			}
-			wg.Done()
 		}()
 	}
 	wg.Wait()
 	close(checkin)
+	// Population error handling.
+	popErrs := make([]*errmsg, I)
+	for len(errChan) > 0 {
+		gotErr := <-errChan
+		popErrs[gotErr.i] = &gotErr
+	}
+
 	// is.updateAttractiveness()
 	for i := 0; i < I; i++ {
+		if popErrs[i] != nil {
+			err = popErrs[i].err
+			continue
+		}
 		is.mw[i] = migrant[G]{is.islands[i].pop.Champion(), i}
 	}
+	cancel()
 	return nil
 }
 

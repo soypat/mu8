@@ -1,7 +1,9 @@
 package mu8_test
 
 import (
+	"context"
 	"fmt"
+	"math"
 	"math/rand"
 
 	"github.com/soypat/mu8"
@@ -16,10 +18,10 @@ func ExamplePopulation() {
 	src := rand.NewSource(1)
 	const (
 		Nprints      = 10
-		genomelen    = 5
+		genomelen    = 8
 		Nindividuals = 100
-		Ngenerations = 10000
-		mutationRate = 0.5
+		Ngenerations = 1000
+		mutationRate = 0.05
 		polygamy     = 1
 	)
 	individuals := make([]*mygenome, Nindividuals)
@@ -47,24 +49,24 @@ func ExamplePopulation() {
 		}
 	}
 	// Output:
-	// champ fitness=0.180
-	// champ fitness=0.942
-	// champ fitness=0.942
-	// champ fitness=0.949
-	// champ fitness=0.949
-	// champ fitness=0.949
-	// champ fitness=0.949
-	// champ fitness=0.949
-	// champ fitness=0.949
+	// champ fitness=0.081
+	// champ fitness=0.832
+	// champ fitness=0.860
+	// champ fitness=0.887
+	// champ fitness=0.887
+	// champ fitness=0.926
+	// champ fitness=0.926
+	// champ fitness=0.926
+	// champ fitness=0.926
 	// champ fitness=0.953
 }
 
 type mygenome struct {
-	genoma []genes.ConstrainedFloat
+	genoma []genes.ConstrainedNormalDistr
 }
 
 func newGenome(n int) *mygenome {
-	return &mygenome{genoma: make([]genes.ConstrainedFloat, n)}
+	return &mygenome{genoma: make([]genes.ConstrainedNormalDistr, n)}
 }
 
 func (g *mygenome) GetGene(i int) mu8.Gene { return &g.genoma[i] }
@@ -73,27 +75,27 @@ func (g *mygenome) Len() int               { return len(g.genoma) }
 // Simulate simply adds the genes. We'd expect the genes to reach the max values of the constraint.
 func (g *mygenome) Simulate() (fitness float64) {
 	for i := range g.genoma {
-		fitness += g.genoma[i].Value()
+		fitness += math.Abs(g.genoma[i].Value())
 	}
-	return fitness / float64(g.Len())
+	return fitness / float64(g.Len()) / 3
 }
 
 func ExampleIslands() {
 	src := rand.NewSource(1)
 	const (
 		Ncrossovers      = 10
-		genomelen        = 5
+		genomelen        = 8
+		Nindividuals     = 100
 		Nislands         = 5
 		Nconcurrent      = Nislands // Must be <= number of islands.
-		Nindividuals     = 50
-		NgenPerCrossover = 2000
-		mutationRate     = 0.2
-		polygamy         = 2
+		NgenPerCrossover = 10
+		mutationRate     = 0.1
+		polygamy         = 1
 	)
 	individuals := make([]*mygenome, Nindividuals)
 	for i := 0; i < Nindividuals; i++ {
 		genome := newGenome(genomelen)
-		mu8.Mutate(genome, src, .80)
+		mu8.Mutate(genome, src, .05)
 		individuals[i] = genome
 	}
 
@@ -101,7 +103,7 @@ func ExampleIslands() {
 		return newGenome(genomelen)
 	})
 	for i := 0; i < Ncrossovers; i++ {
-		err := isls.Advance(mutationRate, polygamy, NgenPerCrossover, Nconcurrent)
+		err := isls.Advance(context.Background(), mutationRate, polygamy, NgenPerCrossover, Nconcurrent)
 		if err != nil {
 			panic(err.Error())
 		}

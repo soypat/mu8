@@ -18,6 +18,11 @@ type Population[G mu8.Genome] struct {
 	fitnessSum   float64
 	gen          int
 	rng          rand.Rand
+	// Signal sent on exit channel
+	// ends call to Advance early without running
+	// all the simulations. It still may take up to a whole
+	// Simulation duration for Advance to succesfully finish.
+	exit chan struct{}
 }
 
 // NewPopulation should be called when instantiating a new
@@ -46,6 +51,7 @@ func NewPopulation[G mu8.Genome](individuals []G, src rand.Source, newIndividual
 		fitness:     make([]float64, len(individuals)),
 		generator:   newIndividual,
 		champ:       newIndividual(),
+		exit:        make(chan struct{}, 1),
 	}
 }
 
@@ -60,6 +66,10 @@ func (pop *Population[G]) Advance() error {
 	pop.fitnessSum = 0
 	maxFitness := math.Inf(-1)
 	champIdx := -1
+	select {
+	case <-pop.exit: // drain exit channel to prevent false positive termination signal.
+	default:
+	}
 	for i := range pop.individuals {
 		fitness := pop.individuals[i].Simulate()
 		// We now check for errors that impede the continuation of the algorithm.
@@ -73,6 +83,11 @@ func (pop *Population[G]) Advance() error {
 		if fitness > maxFitness {
 			maxFitness = fitness
 			champIdx = i
+		}
+		select {
+		case <-pop.exit:
+			return errExitRequested
+		default:
 		}
 	}
 	pop.champ = pop.generator()
