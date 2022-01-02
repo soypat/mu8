@@ -2,7 +2,6 @@ package genetic
 
 import (
 	"context"
-	"fmt"
 	"math/rand"
 	"sync"
 
@@ -26,7 +25,6 @@ type migrant[G mu8.Genome] struct {
 
 // NewIslands WARNING: EXPERIMENTAL. Not stable or ready for use.
 func NewIslands[G mu8.Genome](Nislands int, individuals []G, src rand.Source, newIndividual func() G) Islands[G] {
-	fmt.Println("WARNING: genetic.Islands is not ready for use. Use at your own risk.")
 	if Nislands <= 1 {
 		panic("need at least 2 islands")
 	} else if len(individuals) < Nislands {
@@ -47,7 +45,7 @@ func NewIslands[G mu8.Genome](Nislands int, individuals []G, src rand.Source, ne
 			// If random append unsuccesful, append to first available island.
 			for j := range populations {
 				if len(populations[j]) < maxIndividuals {
-					populations[j] = append(populations[j], individuals[j])
+					populations[j] = append(populations[j], individuals[i])
 					i++
 					break
 				}
@@ -74,12 +72,12 @@ func (is Islands[G]) Islands() []island[G] {
 func newIsland[G mu8.Genome](individuals []G, src rand.Source, newIndividual func() G) island[G] {
 	return island[G]{
 		prevFitness: make([]float64, len(individuals)),
-		pop:         NewPopulation(individuals, src, newIndividual),
+		Population:  NewPopulation(individuals, src, newIndividual),
 	}
 }
 
 type island[G mu8.Genome] struct {
-	pop         Population[G]
+	Population[G]
 	prevFitness []float64
 	attr        float64
 }
@@ -88,9 +86,9 @@ type island[G mu8.Genome] struct {
 // fitness with the migrant
 func (is *island[G]) receiveMigrant(migrant G) {
 	minidx := -1
-	minFitness := is.pop.fitness[0] + 1
-	for i := 0; i < len(is.pop.fitness); i++ {
-		fitness := is.pop.fitness[i]
+	minFitness := is.fitness[0] + 1
+	for i := 0; i < len(is.fitness); i++ {
+		fitness := is.fitness[i]
 		if fitness == 0 {
 			minidx = i
 			break
@@ -99,11 +97,11 @@ func (is *island[G]) receiveMigrant(migrant G) {
 			minFitness = fitness
 		}
 	}
-	mu8.Clone(is.pop.individuals[minidx], migrant)
+	mu8.Clone(is.individuals[minidx], migrant)
 }
 
 func (is *island[G]) Individuals() []G {
-	return is.pop.individuals
+	return is.individuals
 }
 
 type errmsg struct {
@@ -123,7 +121,7 @@ func (is *Islands[G]) Advance(ctx context.Context, mutationRate float64, polygam
 	} else if Ngen <= 1 {
 		panic("number of generations between crossovers should be positive and it is HIGHLY recommended it is above 1")
 	}
-	ctx, cancel := context.WithCancel(ctx)
+
 	defer func() {
 		a := recover()
 		if a != nil {
@@ -134,6 +132,9 @@ func (is *Islands[G]) Advance(ctx context.Context, mutationRate float64, polygam
 			}
 		}
 	}()
+
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
 	// Concurrency limiting mechanism ensures only Nconcurrent
 	// goroutines are running population.Advance at a time.
@@ -148,7 +149,7 @@ func (is *Islands[G]) Advance(ctx context.Context, mutationRate float64, polygam
 		select {
 		case <-ctx.Done():
 			for i := 0; i < I; i++ {
-				is.islands[i].pop.exit <- struct{}{} // Signal to end all calls to Advance immediately.
+				is.islands[i].exit <- struct{}{} // Signal to end all calls to Advance immediately.
 			}
 		}
 	}()
@@ -159,7 +160,7 @@ func (is *Islands[G]) Advance(ctx context.Context, mutationRate float64, polygam
 			defer wg.Done()
 			for g := 0; g < Ngen; g++ {
 				checkin <- struct{}{}
-				err := is.islands[i].pop.Advance()
+				err := is.islands[i].Advance()
 				if err == nil && ctx.Err() != nil {
 					errChan <- errmsg{ctx.Err(), i}
 					return
@@ -168,7 +169,7 @@ func (is *Islands[G]) Advance(ctx context.Context, mutationRate float64, polygam
 					errChan <- errmsg{err, i}
 					return
 				}
-				err = is.islands[i].pop.Selection(mutationRate, polygamy)
+				err = is.islands[i].Selection(mutationRate, polygamy)
 				if err == nil && ctx.Err() != nil {
 					errChan <- errmsg{ctx.Err(), i}
 					return
@@ -196,9 +197,14 @@ func (is *Islands[G]) Advance(ctx context.Context, mutationRate float64, polygam
 			err = popErrs[i].err
 			continue
 		}
-		is.mw[i] = migrant[G]{is.islands[i].pop.Champion(), i}
+		mig := is.islands[i].generator()
+		errclone := mu8.Clone(mig, is.islands[i].Champion())
+		if errclone != nil {
+			return err
+		}
+		is.mw[i] = migrant[G]{mig, i}
 	}
-	cancel()
+
 	return nil
 }
 
@@ -221,26 +227,26 @@ func (is *Islands[G]) champIdx() int {
 	maxFitness := 0.
 	maxidx := -1
 	for i := range is.islands {
-		champFitness := is.islands[i].pop.ChampionFitness()
+		champFitness := is.islands[i].ChampionFitness()
 		if champFitness > maxFitness {
 			maxFitness = champFitness
 			maxidx = i
 		}
 	}
 	if maxidx == -1 {
-		panic("all fitnesses zero. islands not initialized.")
+		panic("all fitnesses zero. can't select champion before Advance completed")
 	}
 	return maxidx
 }
 
 func (is *Islands[G]) Champion() G {
 	champi := is.champIdx()
-	return is.islands[champi].pop.Champion()
+	return is.islands[champi].Champion()
 }
 
 func (is *Islands[G]) ChampionFitness() float64 {
 	champi := is.champIdx()
-	return is.islands[champi].pop.ChampionFitness()
+	return is.islands[champi].ChampionFitness()
 }
 
 func (is *Islands[G]) updateAttractiveness() {
@@ -250,7 +256,7 @@ func (is *Islands[G]) updateAttractiveness() {
 		isle := &is.islands[i]
 		for k := range isle.prevFitness {
 			// iterate over individuals
-			sum += isle.prevFitness[k] - isle.pop.fitness[k]
+			sum += isle.prevFitness[k] - isle.fitness[k]
 		}
 		Sp := float64(len(isle.prevFitness)) // TODO: should this include only "live" (non-zero) fitnesses?
 		isle.attr = sum / Sp

@@ -112,14 +112,14 @@ func ExampleIslands() {
 		fmt.Printf("champ fitness=%.3f\n", champFitness)
 	}
 	// Output:
-	// champ fitness=0.849
-	// champ fitness=0.849
-	// champ fitness=0.849
-	// champ fitness=0.941
-	// champ fitness=0.941
-	// champ fitness=0.941
-	// champ fitness=0.941
-	// champ fitness=0.941
-	// champ fitness=0.941
-	// champ fitness=0.941
+	// champ fitness=0.882
+	// champ fitness=0.897
+	// champ fitness=0.923
+	// champ fitness=0.946
+	// champ fitness=0.946
+	// champ fitness=0.946
+	// champ fitness=0.946
+	// champ fitness=0.946
+	// champ fitness=0.956
+	// champ fitness=0.956
 }
