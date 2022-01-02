@@ -92,7 +92,10 @@ func (pop *Population[G]) Advance() error {
 	}
 	pop.champ = pop.generator()
 	// Clone the champion so that his legacy may live on, untarnished by interbreeding and mutations.
-	mu8.Clone(pop.champ, pop.individuals[champIdx])
+	err := mu8.Clone(pop.champ, pop.individuals[champIdx])
+	if err != nil {
+		return err
+	}
 	bestFitness := pop.fitness[champIdx]
 	if bestFitness < pop.champFitness {
 		// This is a big error. It means new instances of individuals are
@@ -123,7 +126,10 @@ func (pop *Population[G]) Selection(mutationRate float64, polygamy int) error {
 	for i := 1; i < len(pop.individuals); i++ {
 		// Find the meanest, greenest individuals
 		parents := pop.selectFittest(polygamy + 1)
-		child := pop.breed(parents[0], parents...)
+		child, err := pop.breed(parents[0], parents...)
+		if err != nil {
+			return err
+		}
 		mu8.Mutate(child, &pop.rng, mutationRate)
 		newGeneration[i] = child
 	}
@@ -180,11 +186,14 @@ func slicemap(n int, f func(int) float64) []float64 {
 // breed breeds receiver Genome with other genomes by splicing.
 // An argument of no genomes returns a non-referential copy of the receiver,
 // which could be described as a cloning procedure.
-func (pop *Population[G]) breed(firstParent G, conjugates ...G) G {
+func (pop *Population[G]) breed(firstParent G, conjugates ...G) (G, error) {
 	child := pop.generator()
-	mu8.Clone(child, firstParent)
+	err := mu8.Clone(child, firstParent)
+	if err != nil {
+		return child, err
+	}
 	if len(conjugates) == 0 {
-		return child
+		return child, nil
 	}
 
 	for i := 0; i < child.Len(); i++ {
@@ -193,7 +202,7 @@ func (pop *Population[G]) breed(firstParent G, conjugates ...G) G {
 			gene.Splice(&pop.rng, c.GetGene(i))
 		}
 	}
-	return child
+	return child, nil
 }
 
 // Not implemented.
