@@ -106,7 +106,8 @@ Stage 1: coast=0.0s, propMass=1.6kg, Δm=0.01kg/s, totalMass=21.6
 ```
 
 ### CodeBullet's example
-The following command will run an example of what genetic algorithm is possible of doing.
+The following command will run an example of what genetic algorithm is possible of doing (GA built from scratch not using a pre-defined library).
+
 It is solving [CodeBullet's proposed problem](https://www.youtube.com/watch?v=BOZfhUcNiqk) of moving points 
 towards a goal point.
 ```shell
@@ -123,7 +124,15 @@ gen 300: totalfitness=2169.45, elitescore=16.26937
 ```
 The score went from 10 to 16 with help of a genetic algorithm.
 
-### Logo work
+## Contributing
+Contributions very welcome! I myself have no idea what I'm doing so I welcome
+issues on any matter :)
+
+Pull requests also welcome but please submit an issue first on what you'd like to change.
+I promise I'll answer as fast as I can.
+
+
+## Logo work
 Gopher rendition by [Juliette Whittingslow](https://www.instagram.com/artewitty/).  
 Gopher design authored by [Renee French](https://www.instagram.com/reneefrench)
 is licensed by the Creative Commons Attribution 3.0 licensed.
