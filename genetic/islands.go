@@ -109,7 +109,7 @@ type errmsg struct {
 	i   int
 }
 
-func (is *Islands[G]) Advance(ctx context.Context, mutationRate float64, polygamy, Ngen, Nconcurrent int) (err error) {
+func (is *Islands[G]) Advance(ctx context.Context, mutationRate float64, polygamy, Ngen, Nconcurrent int) (adverr error) {
 	I := len(is.islands)
 
 	if Nconcurrent <= 0 {
@@ -120,13 +120,15 @@ func (is *Islands[G]) Advance(ctx context.Context, mutationRate float64, polygam
 		panic("cannot have more goroutines than number of islands.")
 	} else if Ngen <= 1 {
 		panic("number of generations between crossovers should be positive and it is HIGHLY recommended it is above 1")
+	} else if err := ctx.Err(); err != nil {
+		return err
 	}
 
 	defer func() {
 		a := recover()
 		if a != nil {
 			if perr, ok := a.(error); ok {
-				err = perr
+				adverr = perr
 			} else {
 				panic(a)
 			}
@@ -185,22 +187,22 @@ func (is *Islands[G]) Advance(ctx context.Context, mutationRate float64, polygam
 	wg.Wait()
 	close(checkin)
 	// Population error handling.
-	popErrs := make([]*errmsg, I)
+	popErrs := make([]errmsg, I)
 	for len(errChan) > 0 {
 		gotErr := <-errChan
-		popErrs[gotErr.i] = &gotErr
+		popErrs[gotErr.i] = gotErr
 	}
 
 	// is.updateAttractiveness()
 	for i := 0; i < I; i++ {
-		if popErrs[i] != nil {
-			err = popErrs[i].err
+		if popErrs[i].err != nil {
+			adverr = popErrs[i].err
 			continue
 		}
 		mig := is.islands[i].generator()
 		errclone := mu8.Clone(mig, is.islands[i].Champion())
 		if errclone != nil {
-			return err
+			return adverr
 		}
 		is.mw[i] = migrant[G]{mig, i}
 	}
