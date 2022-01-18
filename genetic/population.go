@@ -16,7 +16,7 @@ type Population[G mu8.Genome] struct {
 	// dubiousIndividual shall be set with the problematic
 	// Genome when encountering an unrecoverable error during algorithm execution
 	dubiousIndividual G
-	dubious           bool
+	dubious           float64
 	champFitness      float64
 	fitness           []float64
 	fitnessSum        float64
@@ -78,11 +78,11 @@ func (pop *Population[G]) Advance() error {
 		fitness := pop.individuals[i].Simulate()
 		// We now check for errors that impede the continuation of the algorithm.
 		if fitness < 0 {
-			pop.dubious = true
+			pop.dubious = fitness
 			pop.dubiousIndividual = pop.individuals[i]
 			return ErrNegativeFitness
 		} else if math.IsInf(fitness, 0) || math.IsNaN(fitness) {
-			pop.dubious = true
+			pop.dubious = fitness
 			pop.dubiousIndividual = pop.individuals[i]
 			return ErrInvalidFitness
 		}
@@ -185,8 +185,17 @@ func (pop *Population[G]) ChampionFitness() float64 {
 
 // DubiousIndividual returns the last individual that caused a NaN or Inf
 // result during simulation to aid with debugging. It returns the
-// Genome's zero value and false if no dubious individual was encountered.
-func (pop *Population[G]) DubiousIndividual() (G, bool) {
+// Genome's zero value and 0 if no dubious individual was encountered.
+// The presence of a dubious individual can mean one of two things:
+//
+// 1. The algorithm found an individual that maximizes its fitness
+// beyond the precision of float64 type.
+//
+// 2. Presence of an edge case with the fitness function that breaks
+// the real, positive number assumption.
+//
+// Both of mentioned cases means the fitness function is ill defined and should be corrected.
+func (pop *Population[G]) DubiousIndividual() (dubious G, problematicFitness float64) {
 	return pop.dubiousIndividual, pop.dubious
 }
 

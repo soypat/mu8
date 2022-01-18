@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	ErrNegativeFitness          = errors.New("fitness cannot yield negative values. Use zero instead.")
-	ErrInvalidFitness           = errors.New("got infinite or NaN fitness")
+	ErrNegativeFitness          = errors.New("fitness cannot yield negative values. Use zero instead. See pop.DubiousIndividual to recover problematic Genome information")
+	ErrInvalidFitness           = errors.New("got infinite or NaN fitness. See pop.DubiousIndividual to recover problematic Genome information")
 	ErrZeroFitnessSum           = errors.New("zero fitness sum: cannot make decisions")
 	ErrBadPolygamy              = errors.New("bad polygamy: must be in range [0, Nindividuals)")
 	ErrBadMutationRate          = errors.New("bad mutation rate: must be in range (0, 1]")
