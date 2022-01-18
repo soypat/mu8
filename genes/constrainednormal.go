@@ -13,8 +13,8 @@ type ConstrainedNormalDistr struct {
 }
 
 func NewConstrainedNormalDistr(val, stdDeviation, min, max float64) *ConstrainedNormalDistr {
-	if min >= max {
-		panic("min must be less than max")
+	if min > max {
+		panic(errBadConstraints)
 	}
 	return &ConstrainedNormalDistr{
 		NormalDistribution: *NewNormalDistribution(val, stdDeviation),

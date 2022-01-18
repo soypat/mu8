@@ -19,7 +19,7 @@ var (
 
 	errExitRequested = errors.New("call to Advance termination requested")
 	// This should never trigger.
-	errGenomeCast = errors.New("theoretically unreachable. Bad Genome->G cast. make sure your Genomes return same type")
+	errGenomeCast = errors.New("theoretically unreachable bad Genome->G cast. Make sure your Genomes return same type when calling GetGene(i) for a given ith index")
 )
 
 // FindCodependecy returns error if inconsistency detected in newIndividual function

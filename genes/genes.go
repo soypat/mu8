@@ -1,6 +1,7 @@
 package genes
 
 import (
+	"constraints"
 	"errors"
 	"fmt"
 
@@ -9,6 +10,8 @@ import (
 
 var (
 	ErrMismatchedGeneType = errors.New("mu8.Gene argument in Splice or CloneFrom not same type as receiver")
+	errStartOutOfBounds   = errors.New("start value should be contained within bounds [min,max] for Contrained types")
+	errBadConstraints     = errors.New("min should be less than max for Constrained types and not equal for int gene types")
 )
 
 // Helper function for casting interfaces.
@@ -29,8 +32,24 @@ type gene[T any] interface {
 	SetValue(v T)
 }
 
+// Compile-time checks of interface implementation.
 var (
 	_ gene[float64] = (*ConstrainedFloat)(nil)
 	_ gene[float64] = (*NormalDistribution)(nil)
 	_ gene[float64] = (*ConstrainedNormalDistr)(nil)
+	_ gene[int]     = (*ConstrainedInt)(nil)
 )
+
+func max[T constraints.Integer](a, b T) T {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+func min[T constraints.Integer](a, b T) T {
+	if a < b {
+		return a
+	}
+	return b
+}

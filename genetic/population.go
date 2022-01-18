@@ -10,14 +10,18 @@ import (
 // Population provides a generic implementation
 // of Genetic Algorithm.
 type Population[G mu8.Genome] struct {
-	individuals  []G
-	generator    func() G
-	champ        G
-	champFitness float64
-	fitness      []float64
-	fitnessSum   float64
-	gen          int
-	rng          rand.Rand
+	individuals []G
+	generator   func() G
+	champ       G
+	// dubiousIndividual shall be set with the problematic
+	// Genome when encountering an unrecoverable error during algorithm execution
+	dubiousIndividual G
+	dubious           bool
+	champFitness      float64
+	fitness           []float64
+	fitnessSum        float64
+	gen               int
+	rng               rand.Rand
 	// Signal sent on exit channel
 	// ends call to Advance early without running
 	// all the simulations. It still may take up to a whole
@@ -74,8 +78,12 @@ func (pop *Population[G]) Advance() error {
 		fitness := pop.individuals[i].Simulate()
 		// We now check for errors that impede the continuation of the algorithm.
 		if fitness < 0 {
+			pop.dubious = true
+			pop.dubiousIndividual = pop.individuals[i]
 			return ErrNegativeFitness
 		} else if math.IsInf(fitness, 0) || math.IsNaN(fitness) {
+			pop.dubious = true
+			pop.dubiousIndividual = pop.individuals[i]
 			return ErrInvalidFitness
 		}
 		pop.fitnessSum += fitness
@@ -173,6 +181,13 @@ func (pop *Population[G]) Champion() G {
 // during the last call to Advance().
 func (pop *Population[G]) ChampionFitness() float64 {
 	return pop.champFitness
+}
+
+// DubiousIndividual returns the last individual that caused a NaN or Inf
+// result during simulation to aid with debugging. It returns the
+// Genome's zero value and false if no dubious individual was encountered.
+func (pop *Population[G]) DubiousIndividual() (G, bool) {
+	return pop.dubiousIndividual, pop.dubious
 }
 
 func slicemap(n int, f func(int) float64) []float64 {

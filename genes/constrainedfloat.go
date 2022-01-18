@@ -12,7 +12,7 @@ import (
 // that should be kept within bounds [min,max] during mutation.
 func NewConstrainedFloat(start, min, max float64) *ConstrainedFloat {
 	if min > max {
-		panic("got min less than max in NewConstrainedFloat")
+		panic(errBadConstraints)
 	}
 	return &ConstrainedFloat{
 		gene:      start,
