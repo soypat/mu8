@@ -1,3 +1,7 @@
+[![go.dev reference](https://pkg.go.dev/badge/github.com/soypat/mu8)](https://pkg.go.dev/github.com/soypat/mu8)
+[![Go Report Card](https://goreportcard.com/badge/github.com/soypat/mu8)](https://goreportcard.com/report/github.com/soypat/mu8)
+[![codecov](https://codecov.io/gh/soypat/mu8/branch/main/graph/badge.svg)](https://codecov.io/gh/soypat/mu8/branch/main)
+[![License](https://img.shields.io/badge/License-BSD_2--Clause-orange.svg)](https://opensource.org/licenses/BSD-2-Clause)
 # μ8
 
 <img align="right" width="220px" src="https://user-images.githubusercontent.com/26156425/147430929-bd9adebd-9c00-4ee2-a5bd-bc8642ee9a82.png">
