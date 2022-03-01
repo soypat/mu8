@@ -2,13 +2,13 @@ package genetic
 
 import (
 	"context"
+	"math"
 	"math/rand"
 	"sync"
 
 	"github.com/soypat/mu8"
 )
 
-// Not implemented yet.
 // Islands Model Genetic Algorithm (IMGA) is a multi-population based GA.
 // IMGA aimed to avoid local optimum by maintaining population (island) diversity using migration.
 type Islands[G mu8.Genome] struct {
@@ -23,7 +23,11 @@ type migrant[G mu8.Genome] struct {
 	origin int
 }
 
-// NewIslands WARNING: EXPERIMENTAL. Not stable or ready for use.
+// NewIslands simulates multiple populations which interchange
+// selected migrants (preferring higher fitness scores). The advantage
+// of Islands over just several Populations is that it provides readily
+// available multi-core execution of the genetic algorithm and whose final
+// result is the local optimum of all populations.
 func NewIslands[G mu8.Genome](Nislands int, individuals []G, src rand.Source, newIndividual func() G) Islands[G] {
 	if Nislands <= 1 {
 		panic("need at least 2 islands")
@@ -65,8 +69,12 @@ func NewIslands[G mu8.Genome](Nislands int, individuals []G, src rand.Source, ne
 	}
 }
 
-func (is Islands[G]) Islands() []island[G] {
-	return is.islands
+func (is Islands[G]) Populations() []Population[G] {
+	pops := make([]Population[G], len(is.islands))
+	for i := range is.islands {
+		pops[i] = is.islands[i].Population
+	}
+	return pops
 }
 
 func newIsland[G mu8.Genome](individuals []G, src rand.Source, newIndividual func() G) island[G] {
@@ -109,6 +117,10 @@ type errmsg struct {
 	i   int
 }
 
+// Advance starts Nconcurrent+1 goroutines which run the genetic
+// algorithm on each island. After Ngen generations elapse on each island
+// the champions of each island are selected for migration and interchange places
+// with other island champions. Crossover must be called to fullfill the migration.
 func (is *Islands[G]) Advance(ctx context.Context, mutationRate float64, polygamy, Ngen, Nconcurrent int) (adverr error) {
 	I := len(is.islands)
 
@@ -210,6 +222,8 @@ func (is *Islands[G]) Advance(ctx context.Context, mutationRate float64, polygam
 	return nil
 }
 
+// Crossover randomly distributes the selected migrants
+// across islands.
 func (is *Islands[G]) Crossover() {
 	I := len(is.islands)
 	// Perform crossover.
@@ -223,6 +237,18 @@ func (is *Islands[G]) Crossover() {
 			}
 		}
 	}
+}
+
+// Champion returns the individual with the best fitness among all islands.
+func (is *Islands[G]) Champion() G {
+	champi := is.champIdx()
+	return is.islands[champi].Champion()
+}
+
+// Champion returns the best fitness among all island individuals.
+func (is *Islands[G]) ChampionFitness() float64 {
+	champi := is.champIdx()
+	return is.islands[champi].ChampionFitness()
 }
 
 func (is *Islands[G]) champIdx() int {
@@ -241,16 +267,6 @@ func (is *Islands[G]) champIdx() int {
 	return maxidx
 }
 
-func (is *Islands[G]) Champion() G {
-	champi := is.champIdx()
-	return is.islands[champi].Champion()
-}
-
-func (is *Islands[G]) ChampionFitness() float64 {
-	champi := is.champIdx()
-	return is.islands[champi].ChampionFitness()
-}
-
 func (is *Islands[G]) updateAttractiveness() {
 	I := len(is.islands)
 	for i := 0; i < I; i++ {
@@ -263,4 +279,22 @@ func (is *Islands[G]) updateAttractiveness() {
 		Sp := float64(len(isle.prevFitness)) // TODO: should this include only "live" (non-zero) fitnesses?
 		isle.attr = sum / Sp
 	}
+}
+
+// Not implemented.
+// bias is a first order convergence indicatior showing the average percentage
+// of the prominent value in each in each position of the individuals. A large bias
+// means low genotypic diversity, and vice versa.
+func (pop *Population[G]) bias() float64 {
+	sum := 0.0
+	N := 0.0
+	for _, fitness := range pop.fitness {
+		// We only take into account "live" Genomes for bias
+		if fitness != 0 {
+			sum += fitness
+			N++
+		}
+	}
+
+	return 1/N*math.Abs(sum-N/2) + 0.5
 }

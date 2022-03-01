@@ -2,26 +2,25 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/soypat/mu8)](https://goreportcard.com/report/github.com/soypat/mu8)
 [![codecov](https://codecov.io/gh/soypat/mu8/branch/main/graph/badge.svg)](https://codecov.io/gh/soypat/mu8/branch/main)
 [![License](https://img.shields.io/badge/License-BSD_2--Clause-orange.svg)](https://opensource.org/licenses/BSD-2-Clause)
+
 # μ8
 
-<img align="right" width="220px" src="https://user-images.githubusercontent.com/26156425/147430929-bd9adebd-9c00-4ee2-a5bd-bc8642ee9a82.png">
+<img align="right" width="190px" src="https://user-images.githubusercontent.com/26156425/147430929-bd9adebd-9c00-4ee2-a5bd-bc8642ee9a82.png">
 
-Genetic algorithm for machine learning. 
-Inspired by [CodeBullets amazing video](https://www.youtube.com/watch?v=BOZfhUcNiqk) on the subject.
----
-_This is a work in progress_
+Simple unsupervised machine learning package using Go 1.18 generics.
 
-Steps
-1. Natural selection.
+## User information
+μ8 (mu8) uses a simple genetic algorithm implementation to optimize a objective function. It allows optimizing floating point numbers, integers and anything else that can implement the 3 method [`Gene`](,.mu8.go) interface
+
+The genetic algorithm implementation is currently ~150 lines long and is contained in [`population.go`](./genetic/population.go). It consists of the following steps:
+
+1. Natural selection. Best individual conserved (population champion)
 2. Mate.
 3. Mutate babies.
 4. Rinse and repeat.
 
+The file [`mu8.go`](./mu8.go) contains `Genome` and `Gene` interface definitions. Users should implement `Genome` interface and use `Gene` implementations from [`genes`](./genes) package.
 
-### Info
-* [`mu8.go`](./mu8.go) `Genome` and `Gene` interface definitions. Users should implement `Genome` interface and use `Gene` implementations from `genes` package.
-* `genetic` directory contains genetic algorithm implementation
-* `genes` contains useful `Gene` interface implementations.
 
 ## μ8 examples
 
@@ -109,25 +108,6 @@ Stage 0: coast=281.2s, propMass=0.0kg, Δm=99.35kg/s, totalMass=200.0
 Stage 1: coast=0.0s, propMass=1.6kg, Δm=0.01kg/s, totalMass=21.6
 ```
 
-### CodeBullet's example
-The following command will run an example of what genetic algorithm is possible of doing (GA built from scratch not using a pre-defined library).
-
-It is solving [CodeBullet's proposed problem](https://www.youtube.com/watch?v=BOZfhUcNiqk) of moving points 
-towards a goal point.
-```shell
-go run ./examples/dotforces/
-```
-`elitescore` is the fitness or "score" of the best child in the generation. As you can see it gets larger.
-
-```
-gen 10: totalfitness=1032.37, elitescore=10.24671
-gen 20: totalfitness=1325.90, elitescore=11.98153
-gen 30: totalfitness=1374.32, elitescore=11.98153
-... ten seconds later...
-gen 300: totalfitness=2169.45, elitescore=16.26937
-```
-The score went from 10 to 16 with help of a genetic algorithm.
-
 ## Contributing
 Contributions very welcome! I myself have no idea what I'm doing so I welcome
 issues on any matter :)
@@ -135,8 +115,12 @@ issues on any matter :)
 Pull requests also welcome but please submit an issue first on what you'd like to change.
 I promise I'll answer as fast as I can.
 
+Please take a look at the TODO's in the project: <kbd>Ctrl</kbd>+<kbd>F</kbd> `TODO`
+
+## References
+Inspired by [CodeBullets amazing video](https://www.youtube.com/watch?v=BOZfhUcNiqk) on the subject.
 
 ## Logo work
 Gopher rendition by [Juliette Whittingslow](https://www.instagram.com/artewitty/).  
-Gopher design authored by [Renee French](https://www.instagram.com/reneefrench)
+Gopher design authored by [Renée French](https://www.instagram.com/reneefrench)
 is licensed by the Creative Commons Attribution 3.0 licensed.

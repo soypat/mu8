@@ -46,7 +46,7 @@ type Population[G mu8.Genome] struct {
 //
 // Example:
 //  pop := NewPopulation([]*ind{a, b, c}, rand.NewSource(1), func() *ind {
-//		return newind() // return a blank slate individual
+//		return newIndividual() // return a blank slate individual
 //  })
 func NewPopulation[G mu8.Genome](individuals []G, src rand.Source, newIndividual func() G) Population[G] {
 	return Population[G]{
@@ -148,29 +148,6 @@ func (pop *Population[G]) Selection(mutationRate float64, polygamy int) error {
 	return nil
 }
 
-// selectFittest selects `sample` individuals from the population and returns a slice
-// containing them. The most fittest are the most likely to be selected.
-func (pop *Population[G]) selectFittest(sample int) (fittest []G) {
-	// Quick return for clone case.
-	if sample == 0 {
-		return nil
-	}
-	// The lucky few selected will statistically be more likely to be fitter, proportional to their fitness.
-	luckOfTheFit := slicemap(sample, func(int) float64 { return pop.fitnessSum * pop.rng.Float64() })
-	runningSum := 0.0
-	for i := 0; len(fittest) < sample; i++ {
-		runningSum += pop.fitness[i]
-		for _, threshold := range luckOfTheFit {
-			// TODO(soypat): This code has to be overhauled so same parent is not selected
-			// more than once.
-			if runningSum > threshold {
-				fittest = append(fittest, pop.individuals[i])
-			}
-		}
-	}
-	return fittest
-}
-
 // Champion returns the best candidate of the population, this
 // individual posessing the highest fitness score from last call to Advance().
 func (pop *Population[G]) Champion() G {
@@ -199,12 +176,27 @@ func (pop *Population[G]) DubiousIndividual() (dubious G, problematicFitness flo
 	return pop.dubiousIndividual, pop.dubious
 }
 
-func slicemap(n int, f func(int) float64) []float64 {
-	result := make([]float64, n)
-	for i := range result {
-		result[i] = f(i)
+// selectFittest selects `sample` individuals from the population and returns a slice
+// containing them. The most fittest are the most likely to be selected.
+func (pop *Population[G]) selectFittest(sample int) (fittest []G) {
+	// Quick return for clone case.
+	if sample == 0 {
+		return nil
 	}
-	return result
+	// The lucky few selected will statistically be more likely to be fitter, proportional to their fitness.
+	luckOfTheFit := slicemap(sample, func(int) float64 { return pop.fitnessSum * pop.rng.Float64() })
+	runningSum := 0.0
+	for i := 0; len(fittest) < sample; i++ {
+		runningSum += pop.fitness[i]
+		for _, threshold := range luckOfTheFit {
+			// TODO(soypat): This code has to be overhauled so same parent is not selected
+			// more than once.
+			if runningSum > threshold {
+				fittest = append(fittest, pop.individuals[i])
+			}
+		}
+	}
+	return fittest
 }
 
 // breed breeds receiver Genome with other genomes by splicing.
@@ -229,20 +221,10 @@ func (pop *Population[G]) breed(firstParent G, conjugates ...G) (G, error) {
 	return child, nil
 }
 
-// Not implemented.
-// bias is a first order convergence indicatior showing the average percentage
-// of the prominent value in each in each position of the individuals. A large bias
-// means low genotypic diversity, and vice versa.
-func (pop *Population[G]) bias() float64 {
-	sum := 0.0
-	N := 0.0
-	for _, fitness := range pop.fitness {
-		// We only take into account "live" Genomes for bias
-		if fitness != 0 {
-			sum += fitness
-			N++
-		}
+func slicemap(n int, f func(int) float64) []float64 {
+	result := make([]float64, n)
+	for i := range result {
+		result[i] = f(i)
 	}
-
-	return 1/N*math.Abs(sum-N/2) + 0.5
+	return result
 }
