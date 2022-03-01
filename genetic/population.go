@@ -25,7 +25,7 @@ type Population[G mu8.Genome] struct {
 	// Signal sent on exit channel
 	// ends call to Advance early without running
 	// all the simulations. It still may take up to a whole
-	// Simulation duration for Advance to succesfully finish.
+	// Simulation duration for Advance to successfully finish.
 	exit chan struct{}
 }
 
@@ -149,7 +149,7 @@ func (pop *Population[G]) Selection(mutationRate float64, polygamy int) error {
 }
 
 // Champion returns the best candidate of the population, this
-// individual posessing the highest fitness score from last call to Advance().
+// individual possessing the highest fitness score from last call to Advance().
 func (pop *Population[G]) Champion() G {
 	return pop.champ
 }

@@ -46,7 +46,7 @@ func NewIslands[G mu8.Genome](Nislands int, individuals []G, src rand.Source, ne
 			populations[finalDest] = append(populations[finalDest], individuals[i])
 			i++
 		} else if len(individuals)/(i+1) <= 2 {
-			// If random append unsuccesful, append to first available island.
+			// If random append unsuccessful, append to first available island.
 			for j := range populations {
 				if len(populations[j]) < maxIndividuals {
 					populations[j] = append(populations[j], individuals[i])
@@ -120,7 +120,7 @@ type errmsg struct {
 // Advance starts Nconcurrent+1 goroutines which run the genetic
 // algorithm on each island. After Ngen generations elapse on each island
 // the champions of each island are selected for migration and interchange places
-// with other island champions. Crossover must be called to fullfill the migration.
+// with other island champions. Crossover must be called to fulfill the migration.
 func (is *Islands[G]) Advance(ctx context.Context, mutationRate float64, polygamy, Ngen, Nconcurrent int) (adverr error) {
 	I := len(is.islands)
 
