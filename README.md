@@ -21,6 +21,7 @@ The genetic algorithm implementation is currently ~150 lines long and is contain
 
 The file [`mu8.go`](./mu8.go) contains `Genome` and `Gene` interface definitions. Users should implement `Genome` interface and use `Gene` implementations from [`genes`](./genes) package.
 
+There is an Islands Model Genetic Algorithm (IMGA) implementation in [`islands.go`](./genetic/islands.go) using the `Islands` type that makes use of a parallel optimization algorithm to make use of multi-core machines.
 
 ## μ8 examples
 
