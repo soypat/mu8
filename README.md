@@ -10,7 +10,7 @@
 Simple unsupervised machine learning package using Go 1.18 generics.
 
 ## User information
-μ8 (mu8) uses a simple genetic algorithm implementation to optimize a objective function. It allows optimizing floating point numbers, integers and anything else that can implement the 3 method [`Gene`](,.mu8.go) interface
+μ8 (mu8) uses a simple genetic algorithm implementation to optimize a objective function. It allows optimizing floating point numbers, integers and anything else that can implement the 3 method [`Gene`](./mu8.go) interface
 
 The genetic algorithm implementation is currently ~150 lines long and is contained in [`population.go`](./genetic/population.go). It consists of the following steps:
 
