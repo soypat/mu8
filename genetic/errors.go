@@ -1,6 +1,7 @@
 package genetic
 
 import (
+	"context"
 	"errors"
 	"math"
 	"math/rand"
@@ -25,10 +26,12 @@ var (
 // FindCodependecy returns error if inconsistency detected in newIndividual function
 // for use with mu8.Genome genetic algorithm implementations.
 func FindCodependecy[G mu8.Genome](src rand.Source, newIndividual func() G) error {
+	ctx := context.Background()
+
 	starter1 := newIndividual()
 	starter2 := newIndividual()
-	fit1 := starter1.Simulate()
-	fit2 := starter2.Simulate()
+	fit1 := starter1.Simulate(ctx)
+	fit2 := starter2.Simulate(ctx)
 	if math.IsNaN(fit1) || math.IsNaN(fit2) {
 		return errors.New("NaN fitness")
 	} else if fit1 != fit2 {
@@ -36,15 +39,16 @@ func FindCodependecy[G mu8.Genome](src rand.Source, newIndividual func() G) erro
 	} else if fit1 == 0 {
 		return errors.New("cannot reliably determine codependency with zero fitness simulation results")
 	}
+
 	rng := rand.New(src)
 	for i := 0; i < starter1.Len(); i++ {
 		parent1 := newIndividual()
 		parent2 := newIndividual()
-		fit1 := parent1.Simulate()
+		fit1 := parent1.Simulate(ctx)
 		g := parent1.GetGene(i)
 		// This line should have no effect on parent2's simulation (should be "initial" fitness).
 		g.Mutate(rng)
-		fit2 := parent2.Simulate()
+		fit2 := parent2.Simulate(ctx)
 		if math.IsNaN(fit1) || math.IsNaN(fit2) {
 			return errors.New("NaN fitness")
 		} else if fit1 != fit2 {

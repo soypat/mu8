@@ -1,6 +1,7 @@
 package mu8
 
 import (
+	"context"
 	"errors"
 	"math/rand"
 )
@@ -12,7 +13,12 @@ type Genome interface {
 	// algorithm seeks to optimize. It returns a number quantifying
 	// how well the Genome did in the simulation. This is then
 	// used to compare between other Genomes during the Selection phase.
-	Simulate() (fitness float64)
+	//
+	// The input context is cancelled when the optimization is terminated early
+	// by user or by an error encountered if using IMGA. The context should be used
+	// for long running simulations. It should not be used to pass
+	// values into the simulation
+	Simulate(context.Context) (fitness float64)
 
 	// GetGene gets ith gene in the Genome. It is expected the ith Genes
 	// of two Genomes in a Genetic Algorithm instance have matching types.
@@ -43,9 +49,13 @@ type Gene interface {
 // Mutate mutates the Genes in the Genome g, modifying g in place.
 // The probability of a Gene being mutated is mutationRate/1.
 func Mutate(g Genome, src rand.Source, mutationRate float64) {
-	if mutationRate == 0 {
+	switch {
+	case mutationRate == 0:
 		panic("can't mutate with zero mutation rate")
+	case mutationRate < 0 || mutationRate > 1:
+		panic("mutation rate outside valid bounds 0..1")
 	}
+
 	rng := rand.New(src)
 	for i := 0; i < g.Len(); i++ {
 		r := rng.Float64()
@@ -65,6 +75,7 @@ func Clone(dst, src Genome) error {
 	} else if dst.Len() != src.Len() {
 		return errors.New("destination and source mismatch")
 	}
+
 	for i := 0; i < dst.Len(); i++ {
 		dst.GetGene(i).CloneFrom(src.GetGene(i))
 	}

@@ -60,7 +60,7 @@ func (g *cfgenome) GetGene(i int) mu8.Gene { return &g.genoma[i] }
 func (g *cfgenome) Len() int               { return len(g.genoma) }
 
 // Simulate simply adds the genes. We'd expect the genes to reach the max values of the constraint.
-func (g *cfgenome) Simulate() (fitness float64) {
+func (g *cfgenome) Simulate(context.Context) (fitness float64) {
 	for i := range g.genoma {
 		g.racey = i
 		fitness += math.Abs(g.genoma[i].Value())

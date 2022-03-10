@@ -1,6 +1,7 @@
 package genetic
 
 import (
+	"context"
 	"math"
 	"math/rand"
 
@@ -26,7 +27,10 @@ type Population[G mu8.Genome] struct {
 	// ends call to Advance early without running
 	// all the simulations. It still may take up to a whole
 	// Simulation duration for Advance to successfully finish.
-	exit chan struct{}
+	// TODO: remove use of exit. replace with context cancel propagation.
+
+	exit chan struct{}   // Deprecated: Should not be used. Context should be used instead.
+	ctx  context.Context // TODO(soypat): replace use of exit channel with context.
 }
 
 // NewPopulation should be called when instantiating a new
@@ -56,6 +60,7 @@ func NewPopulation[G mu8.Genome](individuals []G, src rand.Source, newIndividual
 		generator:   newIndividual,
 		champ:       newIndividual(),
 		exit:        make(chan struct{}, 1),
+		ctx:         context.Background(),
 	}
 }
 
@@ -75,7 +80,7 @@ func (pop *Population[G]) Advance() error {
 	default:
 	}
 	for i := range pop.individuals {
-		fitness := pop.individuals[i].Simulate()
+		fitness := pop.individuals[i].Simulate(pop.ctx)
 		// We now check for errors that impede the continuation of the algorithm.
 		if fitness < 0 {
 			pop.dubious = fitness

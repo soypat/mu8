@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"math"
 
@@ -27,7 +28,7 @@ func (r *rocket) String() (output string) {
 	return output
 }
 
-func (r *rocket) Simulate() (fitness float64) {
+func (r *rocket) Simulate(context.Context) (fitness float64) {
 	currentStage := 0
 	// Integration variables.
 	position := 0.0
