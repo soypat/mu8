@@ -23,14 +23,7 @@ type Population[G mu8.Genome] struct {
 	fitnessSum        float64
 	gen               int
 	rng               rand.Rand
-	// Signal sent on exit channel
-	// ends call to Advance early without running
-	// all the simulations. It still may take up to a whole
-	// Simulation duration for Advance to successfully finish.
-	// TODO: remove use of exit. replace with context cancel propagation.
-
-	exit chan struct{}   // Deprecated: Should not be used. Context should be used instead.
-	ctx  context.Context // TODO(soypat): replace use of exit channel with context.
+	ctx               context.Context
 }
 
 // NewPopulation should be called when instantiating a new
@@ -59,7 +52,6 @@ func NewPopulation[G mu8.Genome](individuals []G, src rand.Source, newIndividual
 		fitness:     make([]float64, len(individuals)),
 		generator:   newIndividual,
 		champ:       newIndividual(),
-		exit:        make(chan struct{}, 1),
 		ctx:         context.Background(),
 	}
 }
@@ -69,17 +61,24 @@ func NewPopulation[G mu8.Genome](individuals []G, src rand.Source, newIndividual
 // Individuals if not cloned before calling Selection.
 func (pop *Population[G]) Individuals() []G { return pop.individuals }
 
+// SetContext sets the context passed to individual's Simulate method.
+// By default the context is context.Background(). If the context is cancelled
+// all future Advance() calls on Population will fail until new context is set.
+func (pop *Population[G]) SetContext(ctx context.Context) {
+	pop.ctx = ctx
+}
+
 // Advance simulates current population and saves fitness scores. Multiple
 // calls to Advance without calling Selection may have undesired effects.
 func (pop *Population[G]) Advance() error {
 	pop.fitnessSum = 0
 	maxFitness := math.Inf(-1)
 	champIdx := -1
-	select {
-	case <-pop.exit: // drain exit channel to prevent false positive termination signal.
-	default:
-	}
 	for i := range pop.individuals {
+		if err := pop.ctx.Err(); err != nil {
+			// Early termination if context cancelled.
+			return err
+		}
 		fitness := pop.individuals[i].Simulate(pop.ctx)
 		// We now check for errors that impede the continuation of the algorithm.
 		if fitness < 0 {
@@ -96,11 +95,6 @@ func (pop *Population[G]) Advance() error {
 		if fitness > maxFitness {
 			maxFitness = fitness
 			champIdx = i
-		}
-		select {
-		case <-pop.exit:
-			return errExitRequested
-		default:
 		}
 	}
 	pop.champ = pop.generator()

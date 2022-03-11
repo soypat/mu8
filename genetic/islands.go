@@ -2,6 +2,7 @@ package genetic
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"math/rand"
 	"sync"
@@ -121,7 +122,7 @@ type errmsg struct {
 // algorithm on each island. After Ngen generations elapse on each island
 // the champions of each island are selected for migration and interchange places
 // with other island champions. Crossover must be called to fulfill the migration.
-func (is *Islands[G]) Advance(ctx context.Context, mutationRate float64, polygamy, Ngen, Nconcurrent int) (adverr error) {
+func (is *Islands[G]) Advance(ctx context.Context, mutationRate float64, polygamy, Ngen, Nconcurrent int) error {
 	I := len(is.islands)
 
 	if Nconcurrent <= 0 {
@@ -136,85 +137,67 @@ func (is *Islands[G]) Advance(ctx context.Context, mutationRate float64, polygam
 		return err
 	}
 
-	defer func() {
-		a := recover()
-		if a != nil {
-			if perr, ok := a.(error); ok {
-				adverr = perr
-			} else {
-				panic(a)
-			}
-		}
-	}()
-
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	// Concurrency limiting mechanism ensures only Nconcurrent
 	// goroutines are running population.Advance at a time.
 	checkin := make(chan struct{}, Nconcurrent)
-
+	defer close(checkin)
 	// When Ngen is implemented there shall be exactly I goroutines
 	// each entrusted with it's own population to prevent data-races.
 	var wg sync.WaitGroup
 
-	errChan := make(chan errmsg, I)
-	go func() {
-		select {
-		case <-ctx.Done():
-			for i := 0; i < I; i++ {
-				is.islands[i].exit <- struct{}{} // Signal to end all calls to Advance immediately.
-			}
-		}
-	}()
+	// Advance will terminate on first error,
+	// we keep a buffer of four in just in case to prevent deadlock.
+	errChan := make(chan errmsg, 4)
+	defer close(errChan)
 	for i := 0; i < I; i++ {
+		is.islands[i].Population.SetContext(ctx)
 		i := i // Loop variable escape for closures.
 		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		go func() (err error) {
+			defer func() {
+				a := recover()
+				if a != nil {
+					errChan <- errmsg{err: fmt.Errorf("Population panic: %s", a), i: i}
+					cancel()
+				}
+				if err != nil {
+					errChan <- errmsg{err: err, i: i}
+					cancel()
+				}
+				wg.Done()
+			}()
 			for g := 0; g < Ngen; g++ {
 				checkin <- struct{}{}
-				err := is.islands[i].Advance()
-				if err == nil && ctx.Err() != nil {
-					errChan <- errmsg{ctx.Err(), i}
-					return
-				}
+				err = is.islands[i].Advance()
 				if err != nil {
-					errChan <- errmsg{err, i}
-					return
+					return err
 				}
 				err = is.islands[i].Selection(mutationRate, polygamy)
-				if err == nil && ctx.Err() != nil {
-					errChan <- errmsg{ctx.Err(), i}
-					return
-				}
 				if err != nil {
-					errChan <- errmsg{err, i}
-					return
+					return err
 				}
 				<-checkin
 			}
+			return nil
 		}()
 	}
 	wg.Wait()
-	close(checkin)
+
 	// Population error handling.
-	popErrs := make([]errmsg, I)
-	for len(errChan) > 0 {
+	if len(errChan) > 0 {
 		gotErr := <-errChan
-		popErrs[gotErr.i] = gotErr
+		return gotErr.err
 	}
 
 	// is.updateAttractiveness()
 	for i := 0; i < I; i++ {
-		if popErrs[i].err != nil {
-			adverr = popErrs[i].err
-			continue
-		}
 		mig := is.islands[i].generator()
 		errclone := mu8.Clone(mig, is.islands[i].Champion())
 		if errclone != nil {
-			return adverr
+			return errclone
 		}
 		is.mw[i] = migrant[G]{mig, i}
 	}
