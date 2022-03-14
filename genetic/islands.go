@@ -150,7 +150,7 @@ func (is *Islands[G]) Advance(ctx context.Context, mutationRate float64, polygam
 
 	// Advance will terminate on first error,
 	// we keep a buffer of four in just in case to prevent deadlock.
-	errChan := make(chan errmsg, 4)
+	errChan := make(chan errmsg, I*2) // TODO reduce channel length without causing deadlock.
 	defer close(errChan)
 	for i := 0; i < I; i++ {
 		is.islands[i].Population.SetContext(ctx)
