@@ -46,6 +46,12 @@ type Population[G mu8.Genome] struct {
 //		return newIndividual() // return a blank slate individual
 //  })
 func NewPopulation[G mu8.Genome](individuals []G, src rand.Source, newIndividual func() G) Population[G] {
+	if len(individuals) == 0 {
+		panic("length of individuals must be of length greater than 0")
+	}
+	if individuals[0].Len() == 0 {
+		panic("individuals must have at least one gene for algorithm to work")
+	}
 	return Population[G]{
 		individuals: individuals,
 		rng:         *rand.New(src),
