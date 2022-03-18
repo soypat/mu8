@@ -1,7 +1,6 @@
 package genes
 
 import (
-	"constraints"
 	"errors"
 	"fmt"
 
@@ -40,14 +39,18 @@ var (
 	_ gene[int]     = (*ConstrainedInt)(nil)
 )
 
-func max[T constraints.Integer](a, b T) T {
+type integer interface {
+	int | int64 | int32 | int16 | int8 | uint | uint64 | uint32 | uint16 | uint8
+}
+
+func max[T integer](a, b T) T {
 	if a > b {
 		return a
 	}
 	return b
 }
 
-func min[T constraints.Integer](a, b T) T {
+func min[T integer](a, b T) T {
 	if a < b {
 		return a
 	}
