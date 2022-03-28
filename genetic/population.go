@@ -101,6 +101,11 @@ func (pop *Population[G]) Advance() error {
 		if fitness > maxFitness {
 			maxFitness = fitness
 			champIdx = i
+			if fitness > pop.champFitness {
+				// we perform a greedy save of the new possible champion in case context is cancelled before Advance finishes.
+				pop.champ = pop.individuals[i]
+				pop.champFitness = fitness
+			}
 		}
 	}
 	pop.champ = pop.generator()

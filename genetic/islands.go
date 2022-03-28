@@ -113,28 +113,23 @@ func (is *island[G]) Individuals() []G {
 	return is.individuals
 }
 
-type errmsg struct {
-	err error
-	i   int
-}
-
 // Advance starts Nconcurrent+1 goroutines which run the genetic
 // algorithm on each island. After Ngen generations elapse on each island
 // the champions of each island are selected for migration and interchange places
 // with other island champions. Crossover must be called to fulfill the migration.
 func (is *Islands[G]) Advance(ctx context.Context, mutationRate float64, polygamy, Ngen, Nconcurrent int) error {
 	I := len(is.islands)
-
-	if Nconcurrent <= 0 {
+	switch {
+	case Nconcurrent <= 0:
 		panic("concurrency must be greater than 0")
-	} else if Ngen <= 0 {
+	case Ngen <= 0:
 		panic("number of generations must be greater or equal to 1")
-	} else if Nconcurrent > I {
+	case Nconcurrent > I:
 		panic("cannot have more goroutines than number of islands.")
-	} else if Ngen <= 1 {
+	case Ngen <= 1:
 		panic("number of generations between crossovers should be positive and it is HIGHLY recommended it is above 1")
-	} else if err := ctx.Err(); err != nil {
-		return err
+	case ctx.Err() != nil:
+		return ctx.Err()
 	}
 
 	ctx, cancel := context.WithCancel(ctx)
@@ -150,8 +145,9 @@ func (is *Islands[G]) Advance(ctx context.Context, mutationRate float64, polygam
 
 	// Advance will terminate on first error,
 	// we keep a buffer of four in just in case to prevent deadlock.
-	errChan := make(chan errmsg, I*2) // TODO reduce channel length without causing deadlock.
+	errChan := make(chan error, I*2) // TODO reduce channel length without causing deadlock.
 	defer close(errChan)
+
 	for i := 0; i < I; i++ {
 		is.islands[i].Population.SetContext(ctx)
 		i := i // Loop variable escape for closures.
@@ -160,11 +156,11 @@ func (is *Islands[G]) Advance(ctx context.Context, mutationRate float64, polygam
 			defer func() {
 				a := recover()
 				if a != nil {
-					errChan <- errmsg{err: fmt.Errorf("Population panic: %s", a), i: i}
+					errChan <- fmt.Errorf("island (population) %d panic: %s", i, a)
 					cancel()
 				}
 				if err != nil {
-					errChan <- errmsg{err: err, i: i}
+					errChan <- err
 					cancel()
 				}
 				wg.Done()
@@ -188,8 +184,7 @@ func (is *Islands[G]) Advance(ctx context.Context, mutationRate float64, polygam
 
 	// Population error handling.
 	if len(errChan) > 0 {
-		gotErr := <-errChan
-		return gotErr.err
+		return <-errChan
 	}
 
 	// is.updateAttractiveness()
