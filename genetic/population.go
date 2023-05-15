@@ -68,17 +68,12 @@ func (pop *Population[G]) Individuals() []G { return pop.individuals }
 
 // Advance simulates current population and saves fitness scores. Multiple
 // calls to Advance without calling Selection may have undesired effects.
-// Advance will return an error if the context is cancelled. The context
-// is passed to all calls to Simulate on individuals.
 func (pop *Population[G]) Advance(ctx context.Context) error {
 	pop.fitnessSum = 0
 	maxFitness := math.Inf(-1)
 	champIdx := -1
-	for i := range pop.individuals {
-		if err := ctx.Err(); err != nil {
-			// Early termination if context cancelled.
-			return err
-		}
+	fitnessSum := 0.0
+	for i := 0; i < len(pop.individuals) && ctx.Err() == nil; i++ {
 		fitness := pop.individuals[i].Simulate(ctx)
 		// We now check for errors that impede the continuation of the algorithm.
 		if fitness < 0 {
@@ -90,7 +85,7 @@ func (pop *Population[G]) Advance(ctx context.Context) error {
 			pop.dubiousIndividual = pop.individuals[i]
 			return ErrInvalidFitness
 		}
-		pop.fitnessSum += fitness
+		fitnessSum += fitness
 		pop.fitness[i] = fitness
 		if fitness > maxFitness {
 			maxFitness = fitness
@@ -102,23 +97,29 @@ func (pop *Population[G]) Advance(ctx context.Context) error {
 			}
 		}
 	}
-	pop.champ = pop.generator()
-	// Clone the champion so that his legacy may live on, untarnished by interbreeding and mutations.
-	err := mu8.Clone(pop.champ, pop.individuals[champIdx])
-	if err != nil {
-		return err
-	}
-	bestFitness := pop.fitness[champIdx]
-	if bestFitness < pop.champFitness {
+	switch {
+	case champIdx < 0 || fitnessSum == 0:
+		return ErrZeroFitnessSum // No decision can be taken and no progress can be made.
+	case pop.fitness[champIdx] < pop.champFitness:
 		// This is a big error. It means new instances of individuals are
 		// affected by previous instances Simulation call or calls to gene's Mutate.
 		// If this panic triggers consider all champion data has been compromised
 		// and may not accurately represent "optimal" Genome.
 		panic(ErrCodependencyChampFitness)
-	} else if pop.fitnessSum == 0 {
-		return ErrZeroFitnessSum
+	case math.IsInf(pop.fitnessSum, 0):
+		return ErrInfFitnessSum
 	}
-	pop.champFitness = bestFitness
+	newChamp := pop.generator()
+	// Clone the champion so that his legacy may live on, untarnished by interbreeding and mutations.
+	err := mu8.Clone(newChamp, pop.individuals[champIdx])
+	if err != nil {
+		return err // TODO: Should this panic?
+	}
+	// Looks like all went down OK. We can now update the population's champion.
+	pop.champ = newChamp
+	pop.fitnessSum = fitnessSum
+	pop.champ = pop.individuals[champIdx]
+	pop.champFitness = pop.fitness[champIdx]
 	return nil
 }
 
@@ -127,12 +128,22 @@ func (pop *Population[G]) Advance(ctx context.Context) error {
 // mutates the babies obtained from the breeding procedure. The Individuals
 // are updated once this function terminates.
 func (pop *Population[G]) Selection(mutationRate float64, polygamy int) error {
-	if mutationRate <= 0 || mutationRate > 1 {
+	switch {
+	case pop.champFitness == 0 && pop.fitnessSum == 0:
+		// If you are getting this error try redesigning your fitness function
+		// so that it yields a non-zero fitness value for at least one individual.
+		return errChampionZeroFitness
+	case pop.fitnessSum == 0:
+		// If you are getting this error you either
+		//  - Had a bad run, try running Advance again.
+		//  - Population was not initialized properly via the NewPopulation function.
+		return ErrZeroFitnessSum
+	case mutationRate <= 0 || mutationRate > 1:
 		return ErrBadMutationRate
-	}
-	if polygamy < 0 || polygamy > len(pop.individuals) {
+	case polygamy < 0 || polygamy > len(pop.individuals):
 		return ErrBadPolygamy
 	}
+
 	newGeneration := make([]G, len(pop.individuals))
 	// Skip first index, reserved for our champion.
 	for i := 1; i < len(pop.individuals); i++ {

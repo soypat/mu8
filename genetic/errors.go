@@ -14,6 +14,8 @@ var (
 	ErrNegativeFitness          = errors.New("fitness cannot yield negative values. Use zero instead. See pop.DubiousIndividual to recover problematic Genome information")
 	ErrInvalidFitness           = errors.New("got infinite or NaN fitness. See pop.DubiousIndividual to recover problematic Genome information")
 	ErrZeroFitnessSum           = errors.New("zero fitness sum: cannot make decisions")
+	errChampionZeroFitness      = errors.New("zero fitness champion: consider initializing Population with a non-zero fitness individuals or you may never get results")
+	ErrInfFitnessSum            = errors.New("infinite fitness sum: fitnesses returned by individuals are too large")
 	ErrBadPolygamy              = errors.New("bad polygamy: must be in range [0, Nindividuals)")
 	ErrBadMutationRate          = errors.New("bad mutation rate: must be in range (0, 1]")
 	ErrCodependencyChampFitness = errors.New("codependency found: champion fitness should be monotonically increasing. check for preserved references in newIndividual function. See FindCodependency")

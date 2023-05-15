@@ -32,11 +32,12 @@ func TestIslandsRace(t *testing.T) {
 		individuals[i] = genome
 	}
 
+	ctx := context.Background()
 	isls := NewIslands(Nislands, individuals, src, func() *cfgenome {
 		return newGenome(genomelen)
 	})
 	for i := 0; i < Ncrossovers; i++ {
-		err := isls.Advance(context.Background(), mutationRate, polygamy, NgenPerCrossover, Nconcurrent)
+		err := isls.Advance(ctx, mutationRate, polygamy, NgenPerCrossover, Nconcurrent)
 		if err != nil {
 			panic(err.Error())
 		}
