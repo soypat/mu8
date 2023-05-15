@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 
@@ -66,7 +67,7 @@ func main() {
 
 	pop := genetic.NewPopulation(individuals, src, func() *rocket { return baseRocket.Clone() })
 	for i := 0; i < Ngen; i++ {
-		err := pop.Advance()
+		err := pop.Advance(context.Background())
 		if err != nil {
 			panic(err)
 		}

@@ -35,7 +35,7 @@ func ExamplePopulation() {
 		return newGenome(genomelen)
 	})
 	for i := 0; i < Ngenerations; i++ {
-		err := pop.Advance()
+		err := pop.Advance(context.Background())
 		if err != nil {
 			panic(err.Error())
 		}

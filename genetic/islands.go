@@ -149,7 +149,6 @@ func (is *Islands[G]) Advance(ctx context.Context, mutationRate float64, polygam
 	defer close(errChan)
 
 	for i := 0; i < I; i++ {
-		is.islands[i].Population.SetContext(ctx)
 		i := i // Loop variable escape for closures.
 		wg.Add(1)
 		go func() (err error) {
@@ -167,7 +166,7 @@ func (is *Islands[G]) Advance(ctx context.Context, mutationRate float64, polygam
 			}()
 			for g := 0; g < Ngen; g++ {
 				checkin <- struct{}{}
-				err = is.islands[i].Advance()
+				err = is.islands[i].Advance(ctx)
 				if err != nil {
 					return err
 				}

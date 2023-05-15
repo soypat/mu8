@@ -23,7 +23,6 @@ type Population[G mu8.Genome] struct {
 	fitnessSum        float64
 	gen               int
 	rng               rand.Rand
-	ctx               context.Context
 }
 
 // NewPopulation should be called when instantiating a new
@@ -42,9 +41,10 @@ type Population[G mu8.Genome] struct {
 // is used and the seed saved in between runs to be able to replicate bugs.
 //
 // Example:
-//  pop := NewPopulation([]*ind{a, b, c}, rand.NewSource(1), func() *ind {
-//		return newIndividual() // return a blank slate individual
-//  })
+//
+//	 pop := NewPopulation([]*ind{a, b, c}, rand.NewSource(1), func() *ind {
+//			return newIndividual() // return a blank slate individual
+//	 })
 func NewPopulation[G mu8.Genome](individuals []G, src rand.Source, newIndividual func() G) Population[G] {
 	if len(individuals) == 0 {
 		panic("length of individuals must be of length greater than 0")
@@ -58,7 +58,6 @@ func NewPopulation[G mu8.Genome](individuals []G, src rand.Source, newIndividual
 		fitness:     make([]float64, len(individuals)),
 		generator:   newIndividual,
 		champ:       newIndividual(),
-		ctx:         context.Background(),
 	}
 }
 
@@ -67,25 +66,20 @@ func NewPopulation[G mu8.Genome](individuals []G, src rand.Source, newIndividual
 // Individuals if not cloned before calling Selection.
 func (pop *Population[G]) Individuals() []G { return pop.individuals }
 
-// SetContext sets the context passed to individual's Simulate method.
-// By default the context is context.Background(). If the context is cancelled
-// all future Advance() calls on Population will fail until new context is set.
-func (pop *Population[G]) SetContext(ctx context.Context) {
-	pop.ctx = ctx
-}
-
 // Advance simulates current population and saves fitness scores. Multiple
 // calls to Advance without calling Selection may have undesired effects.
-func (pop *Population[G]) Advance() error {
+// Advance will return an error if the context is cancelled. The context
+// is passed to all calls to Simulate on individuals.
+func (pop *Population[G]) Advance(ctx context.Context) error {
 	pop.fitnessSum = 0
 	maxFitness := math.Inf(-1)
 	champIdx := -1
 	for i := range pop.individuals {
-		if err := pop.ctx.Err(); err != nil {
+		if err := ctx.Err(); err != nil {
 			// Early termination if context cancelled.
 			return err
 		}
-		fitness := pop.individuals[i].Simulate(pop.ctx)
+		fitness := pop.individuals[i].Simulate(ctx)
 		// We now check for errors that impede the continuation of the algorithm.
 		if fitness < 0 {
 			pop.dubious = fitness
