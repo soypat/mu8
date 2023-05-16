@@ -10,6 +10,7 @@ import (
 
 // NewConstrainedFloat returns a mu8.Gene implementation for a number
 // that should be kept within bounds [min,max] during mutation.
+// start is the initial value of the gene.
 func NewConstrainedFloat(start, min, max float64) *ConstrainedFloat {
 	if min > max {
 		panic(errBadConstraints)
@@ -42,6 +43,8 @@ func (c *ConstrainedFloat) SetValue(f float64) {
 	c.gene = c.clamp(f)
 }
 
+// Mutate changes the gene's value by a random amount within constraints.
+// Mutate implements the [mu8.Gene] interface.
 func (c *ConstrainedFloat) Mutate(rng *rand.Rand) {
 	// Uniform mutation distribution.
 	random := rng.Float64()
@@ -49,16 +52,21 @@ func (c *ConstrainedFloat) Mutate(rng *rand.Rand) {
 	c.gene = c.clamp(random)
 }
 
+// CloneFrom copies the argument gene into the receiver. CloneFrom implements
+// the [mu8.Gene] interface. If g is not of type *ConstrainedFloat, CloneFrom panics.
 func (c *ConstrainedFloat) CloneFrom(g mu8.Gene) {
 	co := castGene[*ConstrainedFloat](g)
 	c.gene = co.gene
 }
 
+// Copy returns a new ConstrainedFloat with the same value as the receiver.
 func (c *ConstrainedFloat) Copy() *ConstrainedFloat {
 	clone := *c
 	return &clone
 }
 
+// Splice performs a crossover operation between the receiver and g.
+// Splice implements the [mu8.Gene] interface. If g is not of type *ConstrainedFloat, Splice panics.
 func (c *ConstrainedFloat) Splice(rng *rand.Rand, g mu8.Gene) {
 	co := castGene[*ConstrainedFloat](g)
 	random := rng.Float64()
@@ -96,6 +104,7 @@ func (c *ConstrainedFloat) rangeLength() float64 {
 	return c.maxMinus1 + 1 - c.min
 }
 
+// String implements fmt.Stringer interface.
 func (c *ConstrainedFloat) String() string {
 	return fmt.Sprintf("%f", c.gene)
 }

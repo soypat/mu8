@@ -14,7 +14,7 @@ import (
 // This simple program evolves
 // a genome to maximize it's ConstrainedFloat
 // genome so that it reaches the max value.
-func ExamplePopulation() {
+func ExampleGenome_population() {
 	src := rand.NewSource(1)
 	const (
 		Nprints      = 10
@@ -72,6 +72,7 @@ func newGenome(n int) *mygenome {
 func (g *mygenome) GetGene(i int) mu8.Gene         { return &g.genoma[i].ConstrainedNormalDistr }
 func (g *mygenome) GetGeneGrad(i int) mu8.GeneGrad { return &g.genoma[i] }
 func (g *mygenome) Len() int                       { return len(g.genoma) }
+func (g *mygenome) LenGrad() int                   { return g.Len() }
 
 // Simulate simply adds the genes. We'd expect the genes to reach the max values of the constraint.
 func (g *mygenome) Simulate(context.Context) (fitness float64) {
@@ -81,7 +82,7 @@ func (g *mygenome) Simulate(context.Context) (fitness float64) {
 	return fitness / float64(g.Len()) / 3
 }
 
-func ExampleIslands() {
+func ExampleGenome_islands() {
 	src := rand.NewSource(1)
 	const (
 		Ncrossovers      = 10
@@ -144,9 +145,10 @@ func ExampleGradient() {
 	// Champion will harbor our best individual.
 	champion := newGenome(genomelen)
 	for epoch := 0; epoch < epochs; epoch++ {
-		err := mu8.Gradient(ctx, grads, individual, func() *mygenome {
-			return newGenome(genomelen)
-		})
+		// We calculate the gradients of the individual passing a nil
+		// newIndividual callback since the GenomeGrad type we implemented
+		// does not require blank-slate initialization.
+		err := mu8.Gradient(ctx, grads, individual, nil)
 		if err != nil {
 			panic(err)
 		}

@@ -74,8 +74,9 @@ pop := genetic.NewPopulation(individuals, rand.NewSource(1), func() *mygenome {
 })
 
 const Ngeneration = 100
+ctx := context.Background()
 for i := 0; i < Ngenerations; i++ {
-		err := pop.Advance()
+		err := pop.Advance(ctx)
 		if err != nil {
 			panic(err.Error())
 		}
@@ -88,6 +89,7 @@ fmt.Printf("champ fitness=%.3f\n", pop.ChampionFitness())
 ```
 The final fitness should be close to 1.0 if the algorithm did it's job. For the code see 
 [`mu8_test.go`](./mu8_test.go)
+
 ### Rocket stage optimization example
 
 See [`rocket`](./examples/rocket/main.go) for a demonstration on rocket stage optimization. 
@@ -107,6 +109,44 @@ champHeight:143.292km
 our champion: 
 Stage 0: coast=281.2s, propMass=0.0kg, Δm=99.35kg/s, totalMass=200.0
 Stage 1: coast=0.0s, propMass=1.6kg, Δm=0.01kg/s, totalMass=21.6
+```
+
+### Gradient "ascent" example
+```go
+src := rand.NewSource(1)
+const (
+	genomelen      = 6
+	gradMultiplier = 10.0
+	epochs         = 6
+)
+// Create new individual and mutate it randomly.
+individual := newGenome(genomelen)
+rng := rand.New(src)
+for i := 0; i < genomelen; i++ {
+	individual.GetGene(i).Mutate(rng)
+}
+// Prepare for gradient descent.
+grads := make([]float64, genomelen)
+ctx := context.Background()
+// Champion will harbor our best individual.
+champion := newGenome(genomelen)
+for epoch := 0; epoch < epochs; epoch++ {
+	// We calculate the gradients of the individual passing a nil
+	// newIndividual callback since the GenomeGrad type we implemented
+	// does not require blank-slate initialization.
+	err := mu8.Gradient(ctx, grads, individual, nil)
+	if err != nil {
+		panic(err)
+	}
+	// Apply gradients.
+	for i := 0; i < individual.Len(); i++ {
+		gene := individual.GetGeneGrad(i)
+		grad := grads[i]
+		gene.SetValue(gene.Value() + grad*gradMultiplier)
+	}
+	mu8.CloneGrad(champion, individual)
+	fmt.Printf("fitness=%f with grads=%f\n", individual.Simulate(ctx), grads)
+}
 ```
 
 ## Contributing

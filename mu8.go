@@ -85,7 +85,7 @@ func Clone(dst, src Genome) error {
 type GenomeGrad interface {
 	Simulate(context.Context) (fitness float64)
 	GetGeneGrad(i int) GeneGrad
-	Len() int
+	LenGrad() int
 }
 
 // GeneGrad is a Gene that can be used with gradient descent.
@@ -97,16 +97,19 @@ type GeneGrad interface {
 
 // GradientDescent computes the Gradient of the GenomeGrad g using finite differences.
 // It stores the result of the calculation to grad. The length of grad must match
-// the number of Genes in g. The startIndividual argument is used to seed the
-// individual on every run of the simulation if it is not possible to reuse
-// startIndividual between simulations. If newIndividual is nil then the same individual is
-// used for all runs.
+// the number of Genes in g.
+//
+// # Use of newIndividual argument
+//
+// For the case when the GenomeGrad implementation cannot be reused after a call
+// to Simulate, the newIndividual argument is used to reset the GenomeGrad to a
+// known state. If newIndividual is nil then the same individual is used for all runs.
 func Gradient[T GenomeGrad](ctx context.Context, grad []float64, startIndividual T, newIndividual func() T) error {
-	if startIndividual.Len() != len(grad) {
+	if startIndividual.LenGrad() != len(grad) {
 		panic("scratch length mismatch")
 	}
 	startFitness := startIndividual.Simulate(ctx)
-	for i := 0; i < startIndividual.Len() && ctx.Err() == nil; i++ {
+	for i := 0; i < startIndividual.LenGrad() && ctx.Err() == nil; i++ {
 		if newIndividual != nil {
 			blankSlate := newIndividual()
 			CloneGrad(blankSlate, startIndividual)
@@ -121,14 +124,14 @@ func Gradient[T GenomeGrad](ctx context.Context, grad []float64, startIndividual
 		gene.SetValue(start + step)
 		newFitness := startIndividual.Simulate(ctx)
 		if newFitness < 0 {
-			return errors.New("negative fitness")
+			return ErrNegativeFitness
 		} else if math.IsNaN(newFitness) || math.IsInf(newFitness, 0) {
-			return errors.New("invalid fitness (NaN or Inf))")
+			return ErrInvalidFitness
 		}
 		grad[i] = (newFitness - startFitness) / step
 		gene.SetValue(start) // Return gene to original value.
 	}
-	return nil
+	return ctx.Err()
 }
 
 // CloneGrad clones all the genes of src to dst. It does not modify src.
@@ -137,11 +140,11 @@ func CloneGrad(dst, src GenomeGrad) error {
 		return errors.New("got nil destination for Clone")
 	} else if src == nil {
 		return errors.New("got nil source to Clone")
-	} else if dst.Len() != src.Len() {
+	} else if dst.LenGrad() != src.LenGrad() {
 		return errors.New("destination and source mismatch")
 	}
 
-	for i := 0; i < dst.Len(); i++ {
+	for i := 0; i < dst.LenGrad(); i++ {
 		dst.GetGeneGrad(i).SetValue(src.GetGeneGrad(i).Value())
 	}
 	return nil

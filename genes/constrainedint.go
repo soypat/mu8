@@ -47,21 +47,29 @@ func (c *ConstrainedInt) SetValue(f int) {
 	c.gene = f
 }
 
+// Mutate changes the gene's value by a random amount within constraints.
+// Mutate implements the [mu8.Gene] interface.
 func (c *ConstrainedInt) Mutate(rng *rand.Rand) {
 	// Uniform mutation distribution.
 	c.gene = c.min + rng.Intn(c.rangeMinus1+1)
 }
 
+// CloneFrom copies the argument gene into the receiver. CloneFrom implements
+// the [mu8.Gene] interface. If g is not of type *ConstrainedInt, CloneFrom panics.
 func (c *ConstrainedInt) CloneFrom(g mu8.Gene) {
 	co := castGene[*ConstrainedInt](g)
 	c.gene = co.gene
 }
 
+// Copy returns a copy of the gene.
 func (c *ConstrainedInt) Copy() *ConstrainedInt {
 	clone := *c
 	return &clone
 }
 
+// Splice performs a crossover between the argument and the receiver genes
+// and stores the result in the receiver. It implements the [mu8.Gene] interface.
+// If g is not of type *ConstrainedInt, Splice panics.
 func (c *ConstrainedInt) Splice(rng *rand.Rand, g mu8.Gene) {
 	co := castGene[*ConstrainedInt](g)
 	diff := c.gene - co.gene
@@ -77,6 +85,7 @@ func (c *ConstrainedInt) Splice(rng *rand.Rand, g mu8.Gene) {
 	c.gene = minGene + random
 }
 
+// String returns a string representation of the gene.
 func (c *ConstrainedInt) String() string {
 	return fmt.Sprintf("%d", c.gene)
 }

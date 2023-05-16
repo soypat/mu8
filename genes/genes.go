@@ -7,6 +7,7 @@ import (
 	"github.com/soypat/mu8"
 )
 
+// Gene errors.
 var (
 	ErrMismatchedGeneType = errors.New("mu8.Gene argument in Splice or CloneFrom not same type as receiver")
 	errStartOutOfBounds   = errors.New("start value should be contained within bounds [min,max] for Contrained types")
