@@ -50,3 +50,8 @@ func (cn *ConstrainedNormalDistr) clamp() {
 	max := cn.maxMinus3sd + sd3
 	cn.gene = math.Max(min, math.Min(max, cn.gene))
 }
+
+func (cn *ConstrainedNormalDistr) SetValue(f float64) {
+	cn.gene = f
+	cn.clamp()
+}

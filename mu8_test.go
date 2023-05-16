@@ -62,15 +62,16 @@ func ExamplePopulation() {
 }
 
 type mygenome struct {
-	genoma []genes.ConstrainedNormalDistr
+	genoma []genes.ConstrainedNormalDistrGrad
 }
 
 func newGenome(n int) *mygenome {
-	return &mygenome{genoma: make([]genes.ConstrainedNormalDistr, n)}
+	return &mygenome{genoma: make([]genes.ConstrainedNormalDistrGrad, n)}
 }
 
-func (g *mygenome) GetGene(i int) mu8.Gene { return &g.genoma[i] }
-func (g *mygenome) Len() int               { return len(g.genoma) }
+func (g *mygenome) GetGene(i int) mu8.Gene         { return &g.genoma[i].ConstrainedNormalDistr }
+func (g *mygenome) GetGeneGrad(i int) mu8.GeneGrad { return &g.genoma[i] }
+func (g *mygenome) Len() int                       { return len(g.genoma) }
 
 // Simulate simply adds the genes. We'd expect the genes to reach the max values of the constraint.
 func (g *mygenome) Simulate(context.Context) (fitness float64) {
@@ -122,4 +123,48 @@ func ExampleIslands() {
 	// champ fitness=0.946
 	// champ fitness=0.956
 	// champ fitness=0.956
+}
+
+func ExampleGradient() {
+	src := rand.NewSource(1)
+	const (
+		genomelen      = 6
+		gradMultiplier = 10.0
+		epochs         = 6
+	)
+	// Create new individual and mutate it randomly.
+	individual := newGenome(genomelen)
+	rng := rand.New(src)
+	for i := 0; i < genomelen; i++ {
+		individual.GetGene(i).Mutate(rng)
+	}
+	// Prepare for gradient descent.
+	grads := make([]float64, genomelen)
+	ctx := context.Background()
+	// Champion will harbor our best individual.
+	champion := newGenome(genomelen)
+	for epoch := 0; epoch < epochs; epoch++ {
+		err := mu8.Gradient(ctx, grads, individual, func() *mygenome {
+			return newGenome(genomelen)
+		})
+		if err != nil {
+			panic(err)
+		}
+		// Apply gradients.
+		for i := 0; i < individual.Len(); i++ {
+			gene := individual.GetGeneGrad(i)
+			grad := grads[i]
+			gene.SetValue(gene.Value() + grad*gradMultiplier)
+		}
+		mu8.CloneGrad(champion, individual)
+		fmt.Printf("fitness=%f with grads=%f\n", individual.Simulate(ctx), grads)
+	}
+
+	// Output:
+	// fitness=0.467390 with grads=[-0.055556 -0.055556 -0.055556 0.055556 0.055556 0.055556]
+	// fitness=0.630529 with grads=[-0.055556 -0.055556 -0.055556 0.055556 0.055556 0.055556]
+	// fitness=0.784850 with grads=[-0.055556 -0.055556 -0.055556 0.000000 0.055556 0.055556]
+	// fitness=0.913839 with grads=[-0.055556 -0.055556 -0.055556 0.000000 0.055556 0.055556]
+	// fitness=0.994674 with grads=[-0.055556 -0.055556 -0.055556 0.000000 0.055556 0.055556]
+	// fitness=1.000000 with grads=[-0.055556 -0.055556 -0.055556 0.000000 0.000000 0.000000]
 }

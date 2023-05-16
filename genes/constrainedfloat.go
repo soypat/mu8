@@ -39,10 +39,7 @@ func (c *ConstrainedFloat) Value() float64 { return c.gene }
 // for setting best gene value for a single individual in the
 // population by hand between runs.
 func (c *ConstrainedFloat) SetValue(f float64) {
-	if f < c.min || f > c.maxMinus1+1 {
-		panic("value not within constraints")
-	}
-	c.gene = f
+	c.gene = c.clamp(f)
 }
 
 func (c *ConstrainedFloat) Mutate(rng *rand.Rand) {

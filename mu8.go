@@ -3,6 +3,7 @@ package mu8
 import (
 	"context"
 	"errors"
+	"math"
 	"math/rand"
 )
 
@@ -40,9 +41,7 @@ type Gene interface {
 	// in receiving Gene.
 	CloneFrom(Gene)
 
-	// Mutate performs a random mutation on the receiver. rand is a random number between [0, 1)
-	// which is usually calculated beforehand to determine if Gene is to be mutated.
-	// The rng argument intends to aid with randomness and Mutate implementation process.
+	// Mutate performs a random mutation on the receiver with the aid of rng.
 	Mutate(rng *rand.Rand)
 }
 
@@ -78,6 +77,72 @@ func Clone(dst, src Genome) error {
 
 	for i := 0; i < dst.Len(); i++ {
 		dst.GetGene(i).CloneFrom(src.GetGene(i))
+	}
+	return nil
+}
+
+// GenomeGrad is a Genome that can be used with gradient descent.
+type GenomeGrad interface {
+	Simulate(context.Context) (fitness float64)
+	GetGeneGrad(i int) GeneGrad
+	Len() int
+}
+
+// GeneGrad is a Gene that can be used with gradient descent.
+type GeneGrad interface {
+	SetValue(float64)
+	Value() float64
+	Step() float64
+}
+
+// GradientDescent computes the Gradient of the GenomeGrad g using finite differences.
+// It stores the result of the calculation to grad. The length of grad must match
+// the number of Genes in g. The startIndividual argument is used to seed the
+// individual on every run of the simulation if it is not possible to reuse
+// startIndividual between simulations. If newIndividual is nil then the same individual is
+// used for all runs.
+func Gradient[T GenomeGrad](ctx context.Context, grad []float64, startIndividual T, newIndividual func() T) error {
+	if startIndividual.Len() != len(grad) {
+		panic("scratch length mismatch")
+	}
+	startFitness := startIndividual.Simulate(ctx)
+	for i := 0; i < startIndividual.Len() && ctx.Err() == nil; i++ {
+		if newIndividual != nil {
+			blankSlate := newIndividual()
+			CloneGrad(blankSlate, startIndividual)
+			startIndividual = blankSlate
+		}
+		gene := startIndividual.GetGeneGrad(i)
+		start := gene.Value()
+		step := gene.Step()
+		if step == 0 {
+			return errors.New("zero step size")
+		}
+		gene.SetValue(start + step)
+		newFitness := startIndividual.Simulate(ctx)
+		if newFitness < 0 {
+			return errors.New("negative fitness")
+		} else if math.IsNaN(newFitness) || math.IsInf(newFitness, 0) {
+			return errors.New("invalid fitness (NaN or Inf))")
+		}
+		grad[i] = (newFitness - startFitness) / step
+		gene.SetValue(start) // Return gene to original value.
+	}
+	return nil
+}
+
+// CloneGrad clones all the genes of src to dst. It does not modify src.
+func CloneGrad(dst, src GenomeGrad) error {
+	if dst == nil {
+		return errors.New("got nil destination for Clone")
+	} else if src == nil {
+		return errors.New("got nil source to Clone")
+	} else if dst.Len() != src.Len() {
+		return errors.New("destination and source mismatch")
+	}
+
+	for i := 0; i < dst.Len(); i++ {
+		dst.GetGeneGrad(i).SetValue(src.GetGeneGrad(i).Value())
 	}
 	return nil
 }

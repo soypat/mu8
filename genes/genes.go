@@ -17,7 +17,7 @@ var (
 func castGene[T mu8.Gene](gene mu8.Gene) T {
 	g, ok := gene.(T)
 	if !ok {
-		panic(ErrMismatchedGeneType.Error())
+		panic(fmt.Errorf("%w: cast %T->%T failed", ErrMismatchedGeneType, gene, g))
 	}
 	return g
 }
