@@ -95,7 +95,7 @@ type GeneGrad interface {
 	Step() float64
 }
 
-// GradientDescent computes the Gradient of the GenomeGrad g using finite differences.
+// Gradient computes the gradient of the GenomeGrad g using finite differences.
 // It stores the result of the calculation to grad. The length of grad must match
 // the number of Genes in g.
 //
