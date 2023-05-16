@@ -2,10 +2,24 @@ package genetic
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"math"
 	"math/rand"
 
 	"github.com/soypat/mu8"
+)
+
+// Errors that may be encountered during the execution of the genetic algorithm.
+var (
+	ErrZeroFitnessSum      = errors.New("zero fitness sum: cannot make decisions")
+	ErrInfFitnessSum       = errors.New("infinite fitness sum: fitnesses returned by individuals are too large")
+	errCodependency        = fmt.Errorf("%w: check for preserved references in newIndividual function. See mu8.FindCodependency", mu8.ErrCodependency)
+	errNegativeFitness     = fmt.Errorf("%w: use zero instead. See pop.DubiousIndividual to recover problematic Genome information", mu8.ErrNegativeFitness)
+	errInvalidFitness      = fmt.Errorf("%w:  See pop.DubiousIndividual to recover problematic Genome information", mu8.ErrInvalidFitness)
+	errChampionZeroFitness = errors.New("zero fitness champion: consider initializing Population with a non-zero fitness individuals or you may never get results")
+	errBadPolygamy         = errors.New("bad polygamy: must be in range [0, Nindividuals)")
+	errBadMutationRate     = errors.New("bad mutation rate: must be in range (0, 1]")
 )
 
 // Population provides a generic implementation
@@ -79,11 +93,11 @@ func (pop *Population[G]) Advance(ctx context.Context) error {
 		if fitness < 0 {
 			pop.dubious = fitness
 			pop.dubiousIndividual = pop.individuals[i]
-			return ErrNegativeFitness
+			return errNegativeFitness
 		} else if math.IsInf(fitness, 0) || math.IsNaN(fitness) {
 			pop.dubious = fitness
 			pop.dubiousIndividual = pop.individuals[i]
-			return ErrInvalidFitness
+			return errInvalidFitness
 		}
 		fitnessSum += fitness
 		pop.fitness[i] = fitness
@@ -105,7 +119,7 @@ func (pop *Population[G]) Advance(ctx context.Context) error {
 		// affected by previous instances Simulation call or calls to gene's Mutate.
 		// If this panic triggers consider all champion data has been compromised
 		// and may not accurately represent "optimal" Genome.
-		panic(ErrCodependencyChampFitness)
+		panic(errCodependency)
 	case math.IsInf(pop.fitnessSum, 0):
 		return ErrInfFitnessSum
 	}
@@ -139,9 +153,9 @@ func (pop *Population[G]) Selection(mutationRate float64, polygamy int) error {
 		//  - Population was not initialized properly via the NewPopulation function.
 		return ErrZeroFitnessSum
 	case mutationRate <= 0 || mutationRate > 1:
-		return ErrBadMutationRate
+		return errBadMutationRate
 	case polygamy < 0 || polygamy > len(pop.individuals):
-		return ErrBadPolygamy
+		return errBadPolygamy
 	}
 
 	newGeneration := make([]G, len(pop.individuals))

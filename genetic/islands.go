@@ -127,7 +127,7 @@ func (is *Islands[G]) Advance(ctx context.Context, mutationRate float64, polygam
 	case Nconcurrent > I:
 		panic("cannot have more goroutines than number of islands.")
 	case Ngen <= 1:
-		panic("number of generations between crossovers should be positive and it is HIGHLY recommended it is above 1")
+		panic("number of generations between crossovers should be greater than 0 and it is HIGHLY recommended it is above 1")
 	case ctx.Err() != nil:
 		return ctx.Err()
 	}
