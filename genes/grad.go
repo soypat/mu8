@@ -2,12 +2,28 @@ package genes
 
 import "github.com/soypat/mu8"
 
+// Package level defined default step size.
 const defaultStep = 5e-7
+
+// Step returns the step size that should be performed during gradient descent.
+// It implements the [mu8.GeneGrad] interface by returning a package-level defined default step size.
+func (*ConstrainedFloat) Step() float64 { return defaultStep }
+
+// Step returns the step size that should be performed during gradient descent.
+// It implements the [mu8.GeneGrad] interface by returning a package-level defined default step size.
+func (*ConstrainedNormalDistr) Step() float64 { return defaultStep }
+
+// Step returns the step size that should be performed during gradient descent.
+// It implements the [mu8.GeneGrad] interface by returning a package-level defined default step size.
+func (*NormalDistribution) Step() float64 { return defaultStep }
 
 // compile time check that these types implement the GeneGrad interface.
 var (
 	_ mu8.GeneGrad = (*ConstrainedFloatGrad)(nil)
 	_ mu8.GeneGrad = (*ConstrainedNormalDistrGrad)(nil)
+	_ mu8.GeneGrad = (*ConstrainedFloat)(nil)
+	_ mu8.GeneGrad = (*ConstrainedNormalDistr)(nil)
+	_ mu8.GeneGrad = (*NormalDistribution)(nil)
 )
 
 // ConstrainedFloatGrad is a ConstrainedFloat that implements the GeneGrad interface
